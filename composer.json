@@ -2,7 +2,7 @@
     "name": "maosiji/luphp",
     "description": "this is sample function.",
     "type": "library",
-    "license": "apache2.0",
+    "license": "mit",
     "autoload": {
         "psr-4": {
             "Maosiji\\Luphp\\": "src/"
