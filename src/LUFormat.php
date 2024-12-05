@@ -16,7 +16,7 @@ if ( ! class_exists( 'LUFormat' ) ) {
         function __construct() {}
 
         /**
-         * 发送的数组格式化
+         * 将数组格式化
          * @param int       $code   : 状态码
          * @param string    $msg    : 提示信息
          * @param Mixed    	$data   : 数据
@@ -33,6 +33,20 @@ if ( ! class_exists( 'LUFormat' ) ) {
                 'data' => $data,
                 'reload' => $reload,
             ), $newArr);
+        }
+
+        /**
+         * 发送 格式化数组，并终止程序
+         * @param int       $code   : 状态码
+         * @param string    $msg    : 提示信息
+         * @param Mixed    	$data   : 数据
+         * @param string    $reload : 是否刷新页面 （0 不跳转，1 刷新当前页面，'https://maosiji.com' 跳转到该链接）
+         * @param array  	$newArr : 需要合并的数组
+         */
+        public function sendJson(int $code, string $msg, $data='', string $reload='', array $newArr=array() )
+        {
+            echo json_encode( $this->sendArray( $code, $msg, $data, $reload, $newArr ) );
+            exit();
         }
 
     }
