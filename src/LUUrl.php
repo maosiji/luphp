@@ -1,5 +1,4 @@
 <?php
-
 namespace MAOSIJI\luphp;
 /*
  * author               : 猫斯基

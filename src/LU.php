@@ -215,7 +215,7 @@ if ( !class_exists( 'LU' ) ) {
          */
         public static function get_rand_number( int $length = 6 ): int
         {
-            return (new LUTool())->getRandNumber( $length );
+            return (new LURandom())->getRandNumber( $length );
         }
 
 
