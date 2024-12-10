@@ -1,22 +1,15 @@
 {
     "name": "maosiji/luphp",
-    "description": "A brief description of the LuPHP library",
     "type": "library",
-    "license": "MIT",
     "autoload": {
         "psr-4": {
-            "Maosiji\\LuPHP\\": "src/"
+            "Maosiji\\Luphp\\": "src/"
         }
     },
     "authors": [
         {
-            "name": "Maosiji",
-            "email": "your-email@example.com",
-            "homepage": "https://github.com/maosiji",
-            "role": "Developer"
+            "name": "maosiji"
         }
     ],
-    "require": {},
-    "minimum-stability": "stable",
-    "prefer-stable": true
+    "require": {}
 }
