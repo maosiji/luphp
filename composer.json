@@ -1,6 +1,7 @@
 {
     "name": "maosiji/luphp",
     "type": "library",
+    "license": "MIT",
     "autoload": {
         "psr-4": {
             "Maosiji\\Luphp\\": "src/"
