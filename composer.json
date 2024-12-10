@@ -1,5 +1,6 @@
 {
     "name": "maosiji/luphp",
+    "description": "test",
     "type": "library",
     "license": "MIT",
     "autoload": {
@@ -12,7 +13,5 @@
             "name": "maosiji"
         }
     ],
-    "minimum-stability": "dev",
-    "prefer-stable": true,
     "require": {}
 }
