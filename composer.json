@@ -1,11 +1,10 @@
 {
     "name": "maosiji/luphp",
-    "description": "this is sample function.",
     "type": "library",
-    "license": "mit",
+    "license": "MIT",
     "autoload": {
         "psr-4": {
-            "Maosiji\\Luphp\\": "src/"
+            "MAOSIJI\\luphp\\": "src/"
         }
     },
     "authors": [
@@ -13,8 +12,5 @@
             "name": "maosiji"
         }
     ],
-    "minimum-stability": "dev",
-    "require": {
-      "ext-json": "*"
-    }
+    "require": {}
 }
