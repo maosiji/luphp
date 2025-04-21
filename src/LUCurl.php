@@ -1,173 +1,148 @@
 <?php
-namespace MAOSIJI\luphp;
+namespace MAOSIJI\LUPHP;
 /*
  * author               : 猫斯基
  * url                  : maosiji.com
- * email                : code@maosiji.cn
+ * email                : 1394846666@qq.com
+ * wechat               : maosiji-com
  * date                 : 2024-09-20 17:50
  * update               :
  * project              : luphp
  */
-if ( !class_exists( 'LUCurl' ) ) {
-	class LUCurl
-	{
-		
-		function __construct ()
-		{
-		}
+if ( ! defined( 'ABSPATH' ) ) { die; }
+if (!class_exists('LUCurl')) {
+    class LUCurl
+    {
+        const DEFAULT_HEADERS = [
+            "Content-type: application/json",
+            "Accept: application/json"
+        ];
+
+        public function __construct() {}
+
+        private function __clone() {}
+        private function __wakeup() {}
 
         /**
-         * @param array $headerArray        默认头数组
-         * @param array $headerNewArray     新头数组
-         * @param int $isOverWrite          1 覆盖，0 合并
-         * @return array
-         *          1、默认头数组与新头数组合并
-         *          2、用新头数组覆盖默认头数组
+         * 合并或覆盖默认头信息
+         *
+         * @param array $defaultHeaders 默认头数组
+         * @param array $newHeaders 新头数组
+         * @param bool $overwrite 是否覆盖
+         * @return array 合并后的头数组
          */
-        public function _getHeaderArray (array $headerArray, array $headerNewArray, int $isOverWrite ): array
+        private function getHeaderArray(array $defaultHeaders, array $newHeaders, bool $overwrite): array
         {
-			if ( !empty( $headerNewArray ) ) {
-				if ( !empty( $isOverWrite ) ) {
-					$headerArray = $headerNewArray;
-				} else {
-					$headerArray = array_merge( $headerArray, $headerNewArray );
-				}
-			}
-			
-			return $headerArray;
-		}
-		
-		/**
-		 * @param string    $url	            链接
-		 * @param int	    $isOverWriteHeader	1 覆盖，0 合并
-		 * @param array     $headerNewArray	    Header数组
-		 *
-		 * @return array    返回的信息
-		 * */
-        public function runGet ( string $url, int $isOverWriteHeader = 0, array $headerNewArray = array() )
+            return $overwrite ? $newHeaders : array_merge($defaultHeaders, $newHeaders);
+        }
+
+        /**
+         * 发起 HTTP 请求
+         *
+         * @param string $method 请求方法 (GET, POST, PUT, DELETE, PATCH)
+         * @param string $url 请求 URL
+         * @param array $data 请求数据（仅对 POST, PUT, PATCH, DELETE 有效）
+         * @param array $headers 自定义头信息
+         * @param bool $overwrite 是否覆盖默认头信息
+         * @return array 返回解码后的响应数据
+         */
+        private function request(string $method, string $url, array $data = [], array $headers = [], bool $overwrite = false): array
         {
-			
-			$headerArray = array( "Content-type:application/json;", "Accept:application/json" );
-			$headerArray = $this->_getHeaderArray( $headerArray, $headerNewArray, $isOverWriteHeader );
-			
-			$ch = curl_init();
-			curl_setopt( $ch, CURLOPT_URL, $url );
-			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, FALSE );
-			curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, FALSE );
-			curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
-			curl_setopt( $ch, CURLOPT_HTTPHEADER, $headerArray );
-			$output = curl_exec( $ch );
-			curl_close( $ch );
-			
-			return json_decode( $output, TRUE );
-		}
+            // 合并头信息
+            $headerArray = $this->getHeaderArray(self::DEFAULT_HEADERS, $headers, $overwrite);
+
+            // 初始化 cURL
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headerArray);
+
+            // 根据请求方法设置选项
+            if ($method === 'POST' || $method === 'PUT' || $method === 'PATCH' || $method === 'DELETE') {
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+            }
+
+            // 执行请求并关闭连接
+            $output = curl_exec($ch);
+            curl_close($ch);
+
+            // 返回解码后的 JSON 数据
+            return json_decode($output, true) ?? [];
+        }
 
         /**
-         * @param string    $url	            链接
-         * @param int	    $isOverWriteHeader	1 覆盖，0 合并
-         * @param array     $headerNewArray	    Header数组
+         * 发起 GET 请求
          *
-         * @return array    返回的信息
-         * */
-		public function runPost ( string $url, array $data, int $isOverWriteHeader = 0, array $headerNewArray = array() )
-		{
-			
-			$data = json_encode( $data );
-			$headerArray = array( "Content-type:application/json;charset='utf-8'", "Accept:application/json" );
-			$headerArray = $this->_getHeaderArray( $headerArray, $headerNewArray, $isOverWriteHeader );
-			
-			$curl = curl_init();
-			curl_setopt( $curl, CURLOPT_URL, $url );
-			curl_setopt( $curl, CURLOPT_SSL_VERIFYPEER, FALSE );
-			curl_setopt( $curl, CURLOPT_SSL_VERIFYHOST, FALSE );
-			curl_setopt( $curl, CURLOPT_POST, 1 );
-			curl_setopt( $curl, CURLOPT_POSTFIELDS, $data );
-			curl_setopt( $curl, CURLOPT_HTTPHEADER, $headerArray );
-			curl_setopt( $curl, CURLOPT_RETURNTRANSFER, 1 );
-			$output = curl_exec( $curl );
-			curl_close( $curl );
-			
-			return json_decode( $output, TRUE );
-		}
+         * @param string $url 请求 URL
+         * @param array $headers 自定义头信息
+         * @param bool $overwrite 是否覆盖默认头信息
+         * @return array 解码后的响应数据
+         */
+        public function get(string $url, array $headers = [], bool $overwrite = false): array
+        {
+            return $this->request('GET', $url, [], $headers, $overwrite);
+        }
 
         /**
-         * @param string    $url	            链接
-         * @param int	    $isOverWriteHeader	1 覆盖，0 合并
-         * @param array     $headerNewArray	    Header数组
+         * 发起 POST 请求
          *
-         * @return array    返回的信息
-         * */
-		public function runPut ( string $url, array $data, int $isOverWriteHeader = 0, array $headerNewArray = array() )
-		{
-			
-			$data = json_encode( $data );
-			$headerArray = array( 'Content-type:application/json' );
-			$headerArray = $this->_getHeaderArray( $headerArray, $headerNewArray, $isOverWriteHeader );
-			
-			$ch = curl_init(); //初始化CURL句柄
-			curl_setopt( $ch, CURLOPT_URL, $url ); //设置请求的URL
-			curl_setopt( $ch, CURLOPT_HTTPHEADER, $headerArray );
-			curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 ); //设为TRUE把curl_exec()结果转化为字串，而不是直接输出
-			curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, "PUT" ); //设置请求方式
-			curl_setopt( $ch, CURLOPT_POSTFIELDS, $data );//设置提交的字符串
-			$output = curl_exec( $ch );
-			curl_close( $ch );
-			
-			return json_decode( $output, TRUE );
-		}
+         * @param string $url 请求 URL
+         * @param array $data 请求数据
+         * @param array $headers 自定义头信息
+         * @param bool $overwrite 是否覆盖默认头信息
+         * @return array 解码后的响应数据
+         */
+        public function post(string $url, array $data, array $headers = [], bool $overwrite = false): array
+        {
+            return $this->request('POST', $url, $data, $headers, $overwrite);
+        }
 
         /**
-         * @param string    $url	            链接
-         * @param int	    $isOverWriteHeader	1 覆盖，0 合并
-         * @param array     $headerNewArray	    Header数组
+         * 发起 PUT 请求
          *
-         * @return array    返回的信息
-         * */
-		public function runDelete ( string $url, array $data, int $isOverWriteHeader = 0, array $headerNewArray = array() )
-		{
-			
-			$data = json_encode( $data );
-			$headerArray = array( 'Content-type:application/json' );
-			$headerArray = $this->_getHeaderArray( $headerArray, $headerNewArray, $isOverWriteHeader );
-			
-			$ch = curl_init();
-			curl_setopt( $ch, CURLOPT_URL, $url );
-			curl_setopt( $ch, CURLOPT_HTTPHEADER, $headerArray );
-			curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
-			curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, "DELETE" );
-			curl_setopt( $ch, CURLOPT_POSTFIELDS, $data );
-			$output = curl_exec( $ch );
-			curl_close( $ch );
-			
-			return json_decode( $output, TRUE );
-		}
+         * @param string $url 请求 URL
+         * @param array $data 请求数据
+         * @param array $headers 自定义头信息
+         * @param bool $overwrite 是否覆盖默认头信息
+         * @return array 解码后的响应数据
+         */
+        public function put(string $url, array $data, array $headers = [], bool $overwrite = false): array
+        {
+            return $this->request('PUT', $url, $data, $headers, $overwrite);
+        }
 
         /**
-         * @param string    $url	            链接
-         * @param int	    $isOverWriteHeader	1 覆盖，0 合并
-         * @param array     $headerNewArray	    Header数组
+         * 发起 DELETE 请求
          *
-         * @return array    返回的信息
-         * */
-		public function runPatch ( string $url, array $data, int $isOverWriteHeader = 0, array $headerNewArray = array() )
-		{
-			
-			$data = json_encode( $data );
-			$headerArray = array( 'Content-type:application/json' );
-			$headerArray = $this->_getHeaderArray( $headerArray, $headerNewArray, $isOverWriteHeader );
-			
-			$ch = curl_init();
-			curl_setopt( $ch, CURLOPT_URL, $url );
-			curl_setopt( $ch, CURLOPT_HTTPHEADER, $headerArray );
-			curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
-			curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, "PATCH" );
-			curl_setopt( $ch, CURLOPT_POSTFIELDS, $data );     //20170611修改接口，用/id的方式传递，直接写在url中了
-			$output = curl_exec( $ch );
-			curl_close( $ch );
-			
-			return json_decode( $output );
-		}
-		
-	}
-	
+         * @param string $url 请求 URL
+         * @param array $data 请求数据
+         * @param array $headers 自定义头信息
+         * @param bool $overwrite 是否覆盖默认头信息
+         * @return array 解码后的响应数据
+         */
+        public function delete(string $url, array $data = [], array $headers = [], bool $overwrite = false): array
+        {
+            return $this->request('DELETE', $url, $data, $headers, $overwrite);
+        }
+
+        /**
+         * 发起 PATCH 请求
+         *
+         * @param string $url 请求 URL
+         * @param array $data 请求数据
+         * @param array $headers 自定义头信息
+         * @param bool $overwrite 是否覆盖默认头信息
+         * @return array 解码后的响应数据
+         */
+        public function patch(string $url, array $data, array $headers = [], bool $overwrite = false): array
+        {
+            return $this->request('PATCH', $url, $data, $headers, $overwrite);
+        }
+
+
+
+    }
 }

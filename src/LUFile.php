@@ -1,5 +1,5 @@
 <?php
-namespace MAOSIJI\luphp;
+namespace MAOSIJI\LUPHP;
 /*
  * author               : 猫斯基
  * url                  : maosiji.com
@@ -18,7 +18,7 @@ if ( !class_exists( 'LUFile' ) ) {
          * @param string $filePath  文件路径（包含后缀）
          * @return bool             true 成功，false 失败
          */
-        public function deleteFile(string $filePath ): bool
+        public function delete( string $filePath ): bool
         {
             if ( file_exists($filePath) && unlink($filePath) ) {
                 return true;
@@ -54,12 +54,12 @@ if ( !class_exists( 'LUFile' ) ) {
             $file_url_arr = array();
 
             if ( empty($url) ) {
-                $url = (new LUUrl())->getCurrentUrl();
+                $url = (new LUUrl())->get();
             }
 
             if ( !file_exists($folderPath) ) {
                 if ( !mkdir($folderPath, 0777, TRUE) ) {
-                    return (new LUFormat())->sendArray(0, '目录创建失败');
+                    return (new LUSend())->send_array(0, '目录创建失败');
                 }
             }
 
@@ -68,11 +68,11 @@ if ( !class_exists( 'LUFile' ) ) {
                 if ( move_uploaded_file( $files[$key]['tmp_name'], $filePath ) ) {
                     $file_url_arr[$key] = $url.$value;
                 } else {
-                    return (new LUFormat())->sendArray(0, '上传失败');
+                    return (new LUSend())->send_array(0, '上传失败');
                 }
             }
 
-            return (new LUFormat())->sendArray(1, '上传成功', $file_url_arr);
+            return (new LUSend())->send_array(1, '上传成功', $file_url_arr);
         }
 
 

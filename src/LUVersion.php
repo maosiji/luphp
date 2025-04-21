@@ -1,10 +1,10 @@
 <?php
-
-namespace MAOSIJI\luphp;
+namespace MAOSIJI\LUPHP;
 /*
  * author               : 猫斯基
  * url                  : maosiji.com
- * email                : code@maosiji.cn
+ * email                : 1394846666@qq.com
+ * wechat               : maosiji-com
  * date                 : 2024-09-20 17:50
  * update               :
  * project              : luphp
@@ -26,7 +26,7 @@ if ( !class_exists('LUVersion') ) {
 		 *  			 版本号格式一：10.0
 		 *  			 版本号格式一：10
 		 */
-		public function checkVersion ( string $version ): bool
+		public function check_version ( string $version ): bool
 		{
 			if (empty($version)) {return false;}
 			

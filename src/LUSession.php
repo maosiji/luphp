@@ -1,5 +1,5 @@
 <?php
-namespace MAOSIJI\luphp;
+namespace MAOSIJI\LUPHP;
 session_start();
 date_default_timezone_set('Asia/Shanghai');
 /*
@@ -19,7 +19,7 @@ if ( !class_exists('LUSession') ) {
          * @param string $key	        : 键
          * @param string $value	        : 值
          */
-        public function setKeyValue( string $key, string $value )
+        public function set( string $key, string $value )
         {
             $_SESSION[$key] = $value;
         }
@@ -29,7 +29,7 @@ if ( !class_exists('LUSession') ) {
          *
          * @return string               : 若存在该key，则返回其值
          */
-        public function getKeyValue( string $key ): string
+        public function get( string $key ): string
         {
             if ( isset($_SESSION[$key]) ) {
                 return $_SESSION[$key];
@@ -44,7 +44,7 @@ if ( !class_exists('LUSession') ) {
          *
          * @return bool : 验证设置的session
          */
-        public function checkKeyValue( string $key, string $value ): bool
+        public function check( string $key, string $value ): bool
         {
             if ( isset($_SESSION[$key]) && $_SESSION[$key] === $value ) {
                 return true;
@@ -56,7 +56,7 @@ if ( !class_exists('LUSession') ) {
         /**
          * @param string $key	        : 键
          */
-        public function deleteKeyValue( string $key )
+        public function delete( string $key )
         {
             if ( isset($_SESSION[$key]) ) {
                 unset($_SESSION[$key]);

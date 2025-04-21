@@ -9,18 +9,18 @@
  * description          :
  */
 require __DIR__ . '/../src/LURandom.php';
-require __DIR__ . '/../src/LUVerifiable19Digits.php';
+require __DIR__ . '/../src/LUNO19.php';
 
-use MAOSIJI\luphp\LURandom;
-use MAOSIJI\luphp\LUVerifiable19Digits;
+use MAOSIJI\LUPHP\LURandom;
+use MAOSIJI\LUPHP\LUNO19;
 
-$vd = new LUVerifiable19Digits();
+$vd = new LUNO19();
 
-$n1 = $vd->getNumber();
-$n2 = $vd->getNumber('41120241202', 11);
-$n3 = $vd->getNumber('2024120220101', 13);
-$n4 = $vd->getNumber('', 1, 0);
-$n5 = $vd->getNumber('', 1, 1);
+$n1 = $vd->create();
+$n2 = $vd->create('41120241202', 11);
+$n3 = $vd->create('2024120220101', 13);
+$n4 = $vd->create('', 1, 0);
+$n5 = $vd->create('', 1, 1);
 
 echo PHP_EOL . '生成19位可验证数字字符串' . PHP_EOL;
 echo $n1 . ' ['.strlen($n1).']' . PHP_EOL;

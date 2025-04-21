@@ -1,6 +1,6 @@
 <?php
 
-namespace MAOSIJI\luphp;
+namespace MAOSIJI\LUPHP;
 /*
  * author               : 猫斯基
  * url                  : maosiji.com

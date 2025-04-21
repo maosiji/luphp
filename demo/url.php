@@ -13,7 +13,7 @@
  * remind               ：
  */
 require __DIR__ . '/../vendor/autoload.php';
-use MAOSIJI\luphp\LUUrl;
+use MAOSIJI\LUPHP\LUUrl;
 
 $maoUrl = new LUUrl();
 

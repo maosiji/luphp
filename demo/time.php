@@ -13,7 +13,7 @@
  * remind               ：
  */
 require __DIR__ . '/../vendor/autoload.php';
-use MAOSIJI\luphp\LUTime;
+use MAOSIJI\LUPHP\LUTime;
 
 // 计算时间差
 $beginTime = time();

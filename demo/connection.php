@@ -13,6 +13,6 @@
  * remind               ：
  */
 require __DIR__ . '/../vendor/autoload.php';
-use MAOSIJI\luphp;
+use MAOSIJI\LUPHP;
 
 //

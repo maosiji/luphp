@@ -1,5 +1,5 @@
 <?php
-namespace MAOSIJI\luphp;
+namespace MAOSIJI\LUPHP;
 /*
  * author               : 猫斯基
  * url                  : maosiji.com
@@ -10,25 +10,34 @@ namespace MAOSIJI\luphp;
  * project              : library-luphp
  * description          : 生成可验证的19位数字
  */
-if ( !class_exists('LUVerifiable19Digits') ) {
-    class LUVerifiable19Digits {
+if ( !class_exists('LUNO19') ) {
+    class LUNO19 {
 
         function __construct() {}
 
         /**
          * @param string $prefix    19位数字的前置自定义数字
-         * @param int $pos          校验码1插入的位置
-         * @param int $sex          默认 -1，无视。0 女，偶数；1，男，奇数。
+         * @param int $pos          校验码1插入的位置，默认 2，也就是第2位
+         * @param int $sex          默认 0，无视。1，男。2，女。
          *
          * @return string           19位数字字符串，且第1位不为0
          */
-        public function getNumber(string $prefix='0755', int $pos=1, int $sex=-1 ): string
+        public function create( $prefix='0755', int $pos=2, int $sex=0 ): string
         {
-            $seventeen = $this->_create17Number( $prefix, $sex );
-            $checkCode = $this->_getCheckCode( $seventeen, $pos );
+            $pos = (int) $pos;
+            $pos = ($pos<=2 || $pos>18) ? 2 : $pos;
+            $prefix = (string) $prefix;
+
+            $tool = new LURandom();
+            if ( $sex===2 ) { $sexNum = $tool->rand_even(); }
+            if ( $sex===1 ) { $sexNum = $tool->rand_odd(); }
+            else { $sexNum = $tool->rand_number(1); }
+
+            $seventeen = $this->_create17Number( $prefix.$sexNum );
+            $checkCode = $this->_getCheckCode( $seventeen );
             $checkCodeArr = str_split($checkCode);
 
-            return substr_replace( $seventeen, $checkCodeArr[0], $pos, 0 ).$checkCodeArr[1];
+            return substr_replace($seventeen, $checkCodeArr[0], $pos - 1, 0) . $checkCodeArr[1];
         }
 
         /**
@@ -36,9 +45,13 @@ if ( !class_exists('LUVerifiable19Digits') ) {
          * @param string $id19Number 19位数字
          * @return bool     验证 19 位数字是否符合规范
          */
-        public function verifyNumber( string $id19Number, int $pos=1 ): bool
+        public function verify( $id19Number, int $pos=2 ): bool
         {
-            if ( strlen($id19Number) != 19 || $pos<=0 || $pos>17 ) {
+            $pos = (int) $pos;
+            $pos = ($pos<=2 || $pos>18) ? 2 : $pos;
+            $id19Number = (string) $id19Number;
+
+            if ( strlen($id19Number) != 19 ) {
                 return false;
             }
 
@@ -59,17 +72,13 @@ if ( !class_exists('LUVerifiable19Digits') ) {
          *
          * @return string 创建17位数字
          */
-        private function _create17Number( string $prefix='0755', int $sex=-1 ): string
+        private function _create17Number( string $prefix='0755' ): string
         {
             $tool = new LURandom();
 //            第1位不能为0
             $first = strtoupper(substr($prefix, 0, 1));
 
-            $sexNum = $tool->getRandNumber(1);
-            if ( $sex===0 ) { $sexNum = $tool->getRandEvenByMtRand(); }
-            if ( $sex===1 ) { $sexNum = $tool->getRandOddByMtRand(); }
-
-            $number17 = $tool->getRandNumber(3, false).$tool->getRandNumber(3).$tool->getRandNumber(3).$tool->getRandNumber(3).$tool->getRandNumber(4).$sexNum;
+            $number17 = $tool->rand_number(3, false) . $tool->rand_number(3) .$tool->rand_number(3).$tool->rand_number(3).$tool->rand_number(4);
 
 //            如果第 1 位为 0，则忽略，重新生成 17 位数字
             if ( $first==='0' ) {
@@ -103,20 +112,21 @@ if ( !class_exists('LUVerifiable19Digits') ) {
         }
 
         /**
-         * @param int $pos 第1个校验码的位置，取值范围 0-17
+         * @param int $pos 第1个校验码的位置，取值范围 2-18
          * @param string $id19Number 19位数字
          * @return array 返回字符串数组 ['校验码', '剩余的17位数字']
          */
-        private function _getNumberAndCheckCode( string $id19Number, int $pos=1 ): array
+        private function _getNumberAndCheckCode( string $id19Number, int $pos ): array
         {
 
+            $pos = (int) $pos;
 //            数字段 1 2
-            $num1 = strtoupper(substr($id19Number, 0, $pos));
-            $num2 = strtoupper(substr($id19Number, $pos+1, 17-$pos));
+            $num1 = strtoupper(substr($id19Number, 0, $pos-1));
+            $num2 = strtoupper(substr($id19Number, $pos, 17-($pos-1)));
             $num = $num1 . $num2;
 
 //            校验码1
-            $checkDigit1 = strtoupper(substr($id19Number, $pos, 1));
+            $checkDigit1 = strtoupper(substr($id19Number, $pos-1, 1));
             // 提取最后一位 校验码2
             $checkDigit2 = strtoupper(substr($id19Number, -1, 1));
             $checkDigit = $checkDigit1 . $checkDigit2;

@@ -1,6 +1,6 @@
 <?php
 
-namespace MAOSIJI\luphp\price;
+namespace MAOSIJI\LUPHP\price;
 /*
  * author               : 猫斯基
  * url                  : maosiji.com

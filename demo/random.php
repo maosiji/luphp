@@ -10,7 +10,7 @@
  */
 require __DIR__ . '/../src/LURandom.php';
 
-use MAOSIJI\luphp\LURandom;
+use MAOSIJI\LUPHP\LURandom;
 
 $r = new LURandom();
 

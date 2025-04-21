@@ -13,5 +13,8 @@
         }
     ],
     "minimum-stability": "dev",
-    "require": {}
+    "require": {
+      "ext-json": "*",
+      "ext-curl": "*"
+    }
 }

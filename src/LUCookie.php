@@ -1,5 +1,5 @@
 <?php
-namespace MAOSIJI\luphp;
+namespace MAOSIJI\LUPHP;
 /*
  * author               : 猫斯基
  * url                  : maosiji.com
@@ -19,7 +19,7 @@ if ( !class_exists('LUCookie') ) {
          * @param string $value	        : 值
          * @param int    $timediff		: 时间间隔，默认600秒，即10分钟。单位是 秒。用于cookie的设置。
          */
-        public function setKeyValue( string $key, string $value, int $timediff=600 )
+        public function set( string $key, string $value, int $timediff=600 )
         {
             setcookie($key, $value, $timediff, '/');
         }
@@ -29,7 +29,7 @@ if ( !class_exists('LUCookie') ) {
          *
          * @return string                : 若该key存在，则返回其值
          */
-        public function getKeyValue( string $key ): string
+        public function get( string $key ): string
         {
             if ( isset( $_COOKIE[$key] ) ) {
                 return $_COOKIE[$key];
@@ -44,7 +44,7 @@ if ( !class_exists('LUCookie') ) {
          *
          * @return bool                 :
          */
-        public function checkKeyValue( string $key, string $value ): bool
+        public function check( string $key, string $value ): bool
         {
             if ( isset( $_COOKIE[$key] ) && $_COOKIE[$key] === $value ) {
                 return true;
@@ -56,7 +56,7 @@ if ( !class_exists('LUCookie') ) {
         /**
          * @param string $key	        : 键
          */
-        public function deleteKeyValue( string $key )
+        public function delete( string $key )
         {
             if ( isset( $_COOKIE[$key] ) ) {
                 setcookie($key, '', time() - 3600, '/');
