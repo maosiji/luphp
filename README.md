@@ -2,66 +2,85 @@
 
 封装一些常用功能，便于快速开发（测试中...）
 
-
-## LuFormat
+## LuUrl
 
 ````php
-// ajax 发送数据
-send_array( int $code, string $msg, mixed $data='', string $reload='', array $newArr=array() ): array
+// 获取当前网页链接
+get(): string
+// 更新指定参数后的链接（追加 + 更新值）
+update_params( array $arr, string $url = '' ): string
+// 删除指定参数后的链接
+delete_params( array $arr, string $url = '' ): string
+````
+
+## LUSend
+
+````php
+// 发送数组数据
+send_array( int $code, string $msg, $data='', string $reload='0', array $newArr=array() ): array
+// 发送json数据并终止程序
+send_json( int $code, string $msg, $data='', string $reload='0', array $newArr=array() )
+````
+
+## LUWPSend
+````php
+// 用 wp_send_json 发送数据
+send_json(int $code, string $msg, $data = '', string $reload = '', array $newArr = [], int $flags = 0)
+````
+
+## LUWPNonce
+
+````php
+create_nonce( string $str ): string
+verify_nonce( string $nonce, string $str ): bool
 ````
 
 ## LuCurl
 
 ````php
-runGet ( string $url, int $isOverWriteHeader = 0, array $headerNewArray = array() )
-runPost ( string $url, array $data, int $isOverWriteHeader = 0, array $headerNewArray = array() )
-runPut ( string $url, array $data, int $isOverWriteHeader = 0, array $headerNewArray = array() )
-runDelete ( string $url, array $data, int $isOverWriteHeader = 0, array $headerNewArray = array() )
-runPatch ( string $url, array $data, int $isOverWriteHeader = 0, array $headerNewArray = array() )
+get(string $url, array $headers = [], bool $overwrite = false): array
+post(string $url, array $data, array $headers = [], bool $overwrite = false): array
+put(string $url, array $data, array $headers = [], bool $overwrite = false): array
+delete(string $url, array $data = [], array $headers = [], bool $overwrite = false): array
+patch(string $url, array $data, array $headers = [], bool $overwrite = false): array
 ````
 
 ## LuSafe
 
 ````php
 // 断是否连续点击 ajax 按钮，并禁止
-checkTooManyRequests( int $timediff=5 )
-// 为 session或cookie 设置一组键值对，可用于验证码
-setKeyValue( string $key, string $value, string $type='all', int $timediff=600 ): bool
-// 验证设置的session或cookie
-checkKeyValue( string $key, string $value, string $type='all', int $isDelete=1 ): bool
-// 返回请求名称对应的值
-GetKeyValue( string $key, string $type='all', int $isDelete=0 ): string
+check_too_many_requests(int $timediff = 5)
 ````
 
-# LuTime
+## LuTime
 
 ````php
 // 返回时间间隔数组 array('day'=>'', 'hour'=>'', 'min'=>'', 'sec=>'')
-calculateTimeDiff ( int $begin_time, int $end_time ): array
+calculate_timediff ( int $begin_time, int $end_time ): array
 ````
 
-# LuTool
+## LURandom
 
 ````php
 // 获取指定位数的随机数
-getRandNumber ( $length = 6 )
+rand_number(int $length = 6, bool $is_first_zero = true): string
+// 返回0到9之间的奇数
+rand_odd(): int
+// 返回0到9之间的偶数
+rand_even(): int
 ````
 
-# LuUrl
-
-````php
-// 获取当前网页链接
-getUrl (): string
-// 删除指定参数后的链接
-deleteParam ( string $url, array $arr ): string
-// 添加指定参数后的链接
-addParam ( $url, $arr ): string
-````
-
-# LuVersion
+## LuVersion
 
 ````php
 // 检测版本号格式是否正确
-checkVersion ( $version ): bool
+check_version ( string $version ): bool
+````
+
+## LUNo19
+
+````php
+create( $prefix='0755', int $pos=2, int $sex=0 ): string
+verify( $id19Number, int $pos=2 ): bool
 ````
 

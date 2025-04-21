@@ -10,8 +10,8 @@ namespace MAOSIJI\LUPHP;
  * project              : library-luphp
  * description          : 生成可验证的19位数字
  */
-if ( !class_exists('LUNO19') ) {
-    class LUNO19 {
+if ( !class_exists('LUNo19') ) {
+    class LUNo19 {
 
         function __construct() {}
 

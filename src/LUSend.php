@@ -9,7 +9,6 @@ namespace MAOSIJI\LUPHP;
  * update               :
  * project              : luphp
  */
-if ( ! defined( 'ABSPATH' ) ) { die; }
 if ( ! class_exists( 'LUSend' ) ) {
     class LUSend
     {

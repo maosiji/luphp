@@ -1,5 +1,4 @@
 <?php
-
 namespace MAOSIJI\LUPHP;
 /*
  * author               : 猫斯基
@@ -23,7 +22,7 @@ if ( !class_exists( 'LUTime' ) ) {
 		 *
 		 * @return array        返回时间间隔数组 array('day'=>'', 'hour'=>'', 'min'=>'', 'sec=>'')
 		 */
-		public function calculateTimeDiff ( int $begin_time, int $end_time ): array
+		public function calculate_timediff ( int $begin_time, int $end_time ): array
 		{
 			if ( $begin_time < $end_time ) {
 				$starttime = $begin_time;

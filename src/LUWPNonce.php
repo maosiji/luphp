@@ -8,7 +8,6 @@
  * update               :
  * project              : luphp
  */
-if ( ! defined( 'ABSPATH' ) ) { die; }
 if ( !class_exists('LUWPNonce') ) {
     class LUWPNonce {
 

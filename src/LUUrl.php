@@ -9,7 +9,6 @@ namespace MAOSIJI\LUPHP;
  * update               :
  * project              : luphp
  */
-if ( ! defined( 'ABSPATH' ) ) { die; }
 if ( !class_exists( 'LUUrl' ) ) {
     class LUUrl
     {
@@ -59,42 +58,6 @@ if ( !class_exists( 'LUUrl' ) ) {
         }
 
         /**
-         * 从 URL 中删除指定参数
-         *
-         * @param array $arr 需要删除的参数名数组。为空，则返回原始链接
-         * @param string $url 指定链接。为空，则默认当前链接
-         * @return string 删除指定参数后的链接
-         */
-        public function delete_params( array $arr, string $url = '' ): string
-        {
-            // 如果需要删除的参数数组为空，直接返回原始链接
-            if (empty($arr)) {
-                return $url ?: $this->get();
-            }
-
-            // 如果未指定链接，则使用当前链接
-            $url = !empty($url) ? $url : $this->get();
-
-            // 解析 URL 中的查询参数
-            $query = parse_url($url, PHP_URL_QUERY);
-            parse_str($query ?? '', $params);
-
-            // 删除参数
-            foreach ($arr as $key) {
-                unset($params[$key]);
-            }
-
-            // 构建新的查询字符串
-            $newQuery = http_build_query($params);
-
-            // 获取 URL 的基础部分（去掉查询字符串）
-            $baseUrl = strtok($url, '?');
-
-            // 返回更新后的完整 URL
-            return $baseUrl . ($newQuery ? '?' . $newQuery : '');
-        }
-
-        /**
          * 向 URL 中添加或更新参数
          *
          * @param array $arr 要添加或更新的参数数组（键为参数名，值为参数值）
@@ -118,6 +81,42 @@ if ( !class_exists( 'LUUrl' ) ) {
             // 更新或添加参数
             foreach ($arr as $key => $value) {
                 $params[$key] = $value;
+            }
+
+            // 构建新的查询字符串
+            $newQuery = http_build_query($params);
+
+            // 获取 URL 的基础部分（去掉查询字符串）
+            $baseUrl = strtok($url, '?');
+
+            // 返回更新后的完整 URL
+            return $baseUrl . ($newQuery ? '?' . $newQuery : '');
+        }
+
+        /**
+         * 从 URL 中删除指定参数
+         *
+         * @param array $arr 需要删除的参数名数组。为空，则返回原始链接
+         * @param string $url 指定链接。为空，则默认当前链接
+         * @return string 删除指定参数后的链接
+         */
+        public function delete_params( array $arr, string $url = '' ): string
+        {
+            // 如果需要删除的参数数组为空，直接返回原始链接
+            if (empty($arr)) {
+                return $url ?: $this->get();
+            }
+
+            // 如果未指定链接，则使用当前链接
+            $url = !empty($url) ? $url : $this->get();
+
+            // 解析 URL 中的查询参数
+            $query = parse_url($url, PHP_URL_QUERY);
+            parse_str($query ?? '', $params);
+
+            // 删除参数
+            foreach ($arr as $key=>$value) {
+                unset($params[$key]);
             }
 
             // 构建新的查询字符串

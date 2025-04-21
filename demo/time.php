@@ -2,23 +2,18 @@
 /*
  * author               : 猫斯基
  * url                  : maosiji.com
- * email                : code@maosiji.cn
+ * email                : 1394846666@qq.com
  * date                 : 2024-09-20 17:50
  * update               :
- * project              : phpsuda
- * official website     : maosiji.com
- * official name        : PHP速搭
- * description          : 这家伙很懒，没有写介绍
- * read me              :
- * remind               ：
+ * project              : luphp
  */
 require __DIR__ . '/../vendor/autoload.php';
 use MAOSIJI\LUPHP\LUTime;
 
 // 计算时间差
 $beginTime = time();
-//$endTime = strtotime("2025-02-02");
-$endTime = time();
+$endTime = strtotime("2025-08-15");
+//$endTime = time();
 $maoTime = new LUTime();
-$timeDiff = $maoTime->calculateTimeDiff($beginTime, $endTime);
+$timeDiff = $maoTime->calculate_timediff($beginTime, $endTime);
 print_r($timeDiff);

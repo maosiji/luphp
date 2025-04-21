@@ -14,7 +14,6 @@ date_default_timezone_set('Asia/Shanghai');
  * update               :
  * project              : luphp
  */
-
 if (!class_exists('LUSafe')) {
     class LUSafe
     {
@@ -38,7 +37,7 @@ if (!class_exists('LUSafe')) {
          * @param int $timediff 时间间隔（秒），默认 5 秒
          * @param string $errorMessage 自定义错误信息
          */
-        public function check_too_many_requests(int $timediff = self::DEFAULT_TIME_INTERVAL, string $errorMessage = 'Too Many Requests. Please try again later.')
+        public function check_too_many_requests(int $timediff = self::DEFAULT_TIME_INTERVAL)
         {
             // 检查 session 中是否有上一次请求的时间戳
             if (isset($_SESSION['last_request_time'])) {
