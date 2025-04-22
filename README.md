@@ -84,3 +84,8 @@ create( $prefix='0755', int $pos=2, int $sex=0 ): string
 verify( $id19Number, int $pos=2 ): bool
 ````
 
+## LUPrice
+
+````php
+format( $price ): float
+````

@@ -31,9 +31,9 @@ if (!class_exists('LUPrice')) {
          * 格式化价格为两位小数的字符串格式
          *
          * @param mixed $price 输入的价格值
-         * @return string 格式化后的价格（如：10.00）
+         * @return float 格式化后的价格（如：10.00）
          */
-        public function format( $price ): string
+        public function format( $price ): float
         {
             // 检查输入是否为有效数字
             if (!is_numeric($price)) { $price = 0.00; }
