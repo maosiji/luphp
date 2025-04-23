@@ -27,16 +27,16 @@ if (!class_exists('LUFile')) {
          *
          * @param string $uploadDir 上传文件的绝对路径
          * @param string $uploadUrl 上传文件的 URL 相对路径 /wp-content/uploads/shanhu/
-         * @param string $files_key $_FILES 的 key
+         * @param string $input_name $_FILES 的 input name
          * @param string $name 上传文件的新名称
-         * @param string $type 上传文件的类型，默认 all
+         * @param array $type 上传文件的后缀，默认 空数组，全部类型都可以
          * @return array 返回上传文件的 URL 列表
          */
-        public function upload(string $uploadDir, string $uploadUrl, string $files_key, string $name, string $type = 'all'): array
+        public function upload( string $uploadDir, string $uploadUrl, string $input_name, string $name, array $type=[] ): array
         {
             $backArr = [];
 
-            if (empty($_FILES[$files_key])) {
+            if (empty($_FILES[$input_name])) {
                 return $backArr; // 如果没有文件上传，直接返回空数组
             }
 
@@ -50,9 +50,9 @@ if (!class_exists('LUFile')) {
             }
 
             // 遍历上传文件
-            foreach ($_FILES[$files_key]['tmp_name'] as $k => $fileTmp) {
-                $fileName = $_FILES[$files_key]['name'][$k];
-                $fileType = $_FILES[$files_key]['type'][$k];
+            foreach ($_FILES[$input_name]['tmp_name'] as $k => $fileTmp) {
+                $fileName = $_FILES[$input_name]['name'][$k];
+                $fileType = $_FILES[$input_name]['type'][$k];
 
                 // 文件类型验证
                 if ($type !== 'all' && !$this->is_valid_file_type($fileName, $fileType, $type)) {
@@ -99,35 +99,90 @@ if (!class_exists('LUFile')) {
          *
          * @param string $fileName 文件名
          * @param string $fileType 文件 MIME 类型
-         * @param string $allowedType 允许的文件类型
+         * @param array $allowedType 允许的文件后缀数组
          * @return bool 是否有效
          */
-        private function is_valid_file_type(string $fileName, string $fileType, string $allowedType): bool
+        private function is_valid_file_type( string $fileName, string $fileType, array $allowedType ): bool
         {
+            if ( empty($fileName) || empty($fileType) ) { return false; }
+            if ( empty($allowedType) ) { return true; }
+
             // 获取文件扩展名
             $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
-            // 允许的扩展名映射
-            $allowedExtensions = [
-                'image' => ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff', 'svg'], // 图片文件
-                'pdf'   => ['pdf'],                                                      // PDF 文件
-                'doc'   => ['doc', 'docx', 'odt'],                                       // 文档文件
-                'xls'   => ['xls', 'xlsx', 'csv', 'ods'],                                // 表格文件
-                'ppt'   => ['ppt', 'pptx', 'odp'],                                       // 幻灯片文件
-                'zip'   => ['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz'],              // 压缩文件
-                'audio' => ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'wma'],          // 音频文件
-                'video' => ['mp4', 'avi', 'mkv', 'mov', 'wmv', 'flv', 'webm', 'mpeg'],  // 视频文件
-                'text'  => ['txt', 'log', 'ini', 'conf', 'md', 'json', 'xml', 'yaml'],  // 文本文件
-                'font'  => ['ttf', 'otf', 'woff', 'woff2', 'eot'],                      // 字体文件
+            // 定义扩展名与 MIME 类型的映射表
+            $mimeMapping = [
+                // 图片格式
+                'jpg'   => 'image/jpeg',
+                'jpeg'  => 'image/jpeg',
+                'png'   => 'image/png',
+                'gif'   => 'image/gif',
+                'bmp'   => 'image/bmp',
+                'webp'  => 'image/webp',
+                'svg'   => 'image/svg+xml',
+                'ico'   => 'image/x-icon',
+
+                // 文档格式
+                'pdf'   => 'application/pdf',
+                'txt'   => 'text/plain',
+                'doc'   => 'application/msword',
+                'docx'  => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'xls'   => 'application/vnd.ms-excel',
+                'xlsx'  => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'ppt'   => 'application/vnd.ms-powerpoint',
+                'pptx'  => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                'odt'   => 'application/vnd.oasis.opendocument.text',
+                'ods'   => 'application/vnd.oasis.opendocument.spreadsheet',
+                'odp'   => 'application/vnd.oasis.opendocument.presentation',
+
+                // 压缩文件格式
+                'zip'   => 'application/zip',
+                'rar'   => 'application/x-rar-compressed',
+                '7z'    => 'application/x-7z-compressed',
+                'tar'   => 'application/x-tar',
+                'gz'    => 'application/gzip',
+
+                // 音频格式
+                'mp3'   => 'audio/mpeg',
+                'wav'   => 'audio/wav',
+                'ogg'   => 'audio/ogg',
+                'flac'  => 'audio/flac',
+                'aac'   => 'audio/aac',
+                'm4a'   => 'audio/mp4',
+
+                // 视频格式
+                'mp4'   => 'video/mp4',
+                'webm'  => 'video/webm',
+                'mkv'   => 'video/x-matroska',
+                'avi'   => 'video/x-msvideo',
+                'mov'   => 'video/quicktime',
+                'flv'   => 'video/x-flv',
+                'wmv'   => 'video/x-ms-wmv',
+
+                // 字体格式
+                'ttf'   => 'font/ttf',
+                'otf'   => 'font/otf',
+                'woff'  => 'font/woff',
+                'woff2' => 'font/woff2',
+                'eot'   => 'application/vnd.ms-fontobject',
+
+                // 其他常见格式
+                'json'  => 'application/json',
+                'xml'   => 'application/xml',
+                'csv'   => 'text/csv',
+                'html'  => 'text/html',
+                'css'   => 'text/css',
+                'js'    => 'application/javascript',
+                'php'   => 'application/x-httpd-php',
+                'exe'   => 'application/x-msdownload',
+                'iso'   => 'application/octet-stream',
             ];
 
-            // 如果是自定义 MIME 类型，直接匹配
-            if ($allowedType === 'all' || strpos($fileType, $allowedType) !== false) {
-                return true;
-            }
+            $me = $mimeMapping[$extension] ?? '';
 
-            // 如果是扩展名类型，检查扩展名
-            return isset($allowedExtensions[$allowedType]) && in_array($extension, $allowedExtensions[$allowedType]);
+            // 扩展名是否允许
+            // 检查 MIME 类型是否匹配
+            return in_array($extension, $allowedType) && $fileType===$me;
         }
 
         /**

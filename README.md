@@ -2,7 +2,7 @@
 
 封装一些常用功能，便于快速开发（测试中...）
 
-## LuUrl
+## 1、LuUrl
  
 ````php
 // 获取当前网页链接
@@ -13,7 +13,7 @@ update_params( array $arr, string $url = '' ): string
 delete_params( array $arr, string $url = '' ): string
 ````
 
-## LUSend
+## 2、LUSend
 
 ````php
 // 发送数组数据
@@ -22,20 +22,20 @@ send_array( int $code, string $msg, $data='', string $reload='0', array $newArr=
 send_json( int $code, string $msg, $data='', string $reload='0', array $newArr=array() )
 ````
 
-## LUWPSend
+## 3、LUWPSend
 ````php
 // 用 wp_send_json 发送数据
 send_json(int $code, string $msg, $data = '', string $reload = '', array $newArr = [], int $flags = 0)
 ````
 
-## LUWPNonce
+## 4、LUWPNonce
 
 ````php
 create_nonce( string $str ): string
 verify_nonce( string $nonce, string $str ): bool
 ````
 
-## LuCurl
+## 5、LuCurl
 
 ````php
 get(string $url, array $headers = [], bool $overwrite = false): array
@@ -45,21 +45,21 @@ delete(string $url, array $data = [], array $headers = [], bool $overwrite = fal
 patch(string $url, array $data, array $headers = [], bool $overwrite = false): array
 ````
 
-## LuSafe
+## 6、LuSafe
 
 ````php
 // 断是否连续点击 ajax 按钮，并禁止
 check_too_many_requests(int $timediff = 5)
 ````
 
-## LuTime
+## 7、LuTime
 
 ````php
 // 返回时间间隔数组 array('day'=>'', 'hour'=>'', 'min'=>'', 'sec=>'')
 calculate_timediff ( int $begin_time, int $end_time ): array
 ````
 
-## LURandom
+## 8、LURandom
 
 ````php
 // 获取指定位数的随机数
@@ -70,23 +70,34 @@ rand_odd(): int
 rand_even(): int
 ````
 
-## LuVersion
+## 9、LuVersion
 
 ````php
 // 检测版本号格式是否正确
 check_version ( string $version ): bool
 ````
 
-## LUNo19
+## 10、LUNo19
 
 ````php
 create( $prefix='0755', int $pos=2, int $sex=0 ): string
 verify( $id19Number, int $pos=2 ): bool
 ````
 
-## LUPrice
+## 11、LUPrice
 
 ````php
 format( $price ): float
 ````
 
+## 12、LUIdcard
+````php
+// 是否是合法身份证号
+is(string $idCard): bool
+// 返回性别，1 男，2 女
+sex(string $idCard): int
+// 返回生日，1980-02-03
+birthday(string $idCard): string
+// 返回省级，北京市、台湾省、香港特别行政区
+province(string $idCard): string
+````
