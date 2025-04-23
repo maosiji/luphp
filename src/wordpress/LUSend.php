@@ -36,7 +36,7 @@ if ( ! class_exists( 'LUSend' ) ) {
             // 格式化响应数据
             $response = (new \MAOSIJI\LU\LUSend())->send_array($code, $msg, $data, $reload, $newArr);
 
-            // 根据状态码选择不同的 WordPress 方法
+            // 根据状态码选择不同的 WordPress 方法2
 //            if ($code === 1) {
 //                wp_send_json_success(array_merge($response, ['success' => true]), 200, $flags);
 //            } elseif ($code === 0) {
