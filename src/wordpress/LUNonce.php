@@ -10,7 +10,7 @@
  */
 namespace MAOSIJI\LU\WP;
 if (!class_exists('MAOSIJI\LUPHP\wordpress\LUWPNonce')) {
-    class LUWPNonce
+    class LUNonce
     {
 
         function __construct()

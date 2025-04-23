@@ -10,8 +10,8 @@
  */
 namespace MAOSIJI\LU\WP;
 use MAOSIJI\LU\LUSend;
-if ( ! class_exists( 'LUWPSend' ) ) {
-    class LUWPSend
+if ( ! class_exists( 'LUSend' ) ) {
+    class LUSend
     {
         function __construct()
         {

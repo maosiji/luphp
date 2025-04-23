@@ -8,8 +8,8 @@
  * project              : luphp
  */
 namespace MAOSIJI\LU\WP;
-if (!class_exists('LUWPFile')) {
-    class LUWPFile
+if (!class_exists('LUFile')) {
+    class LUFile
     {
         private $allowed_mime_types = [];
 
