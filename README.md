@@ -89,3 +89,4 @@ verify( $id19Number, int $pos=2 ): bool
 ````php
 format( $price ): float
 ````
+

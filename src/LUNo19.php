@@ -1,5 +1,4 @@
 <?php
-namespace MAOSIJI\LUPHP;
 /*
  * author               : 猫斯基
  * url                  : maosiji.com
@@ -10,6 +9,7 @@ namespace MAOSIJI\LUPHP;
  * project              : library-luphp
  * description          : 生成可验证的19位数字
  */
+namespace MAOSIJI\LUPHP;
 if ( !class_exists('LUNo19') ) {
     class LUNo19 {
 
