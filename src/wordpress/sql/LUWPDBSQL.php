@@ -9,9 +9,9 @@
  * project              : luphp
  */
 namespace MAOSIJI\LU\WP;
-if ( !class_exists('LUDBSQL') ) {
+if ( !class_exists('LUWPDBSQL') ) {
 
-    abstract class LUDBSQL {
+    abstract class LUWPDBSQL {
 
         protected $tableName;
         private static $instances = [];
@@ -53,7 +53,7 @@ if ( !class_exists('LUDBSQL') ) {
                 return array( 'code'=>0, 'msg'=>'SQL语句是空的。', 'data'=>$sql );
             }
 
-            $ddl = new LUDdl();
+            $ddl = new LUWPDdl();
             $ddl->createTable( $this->tableName, $sql );
         }
 
@@ -84,7 +84,7 @@ if ( !class_exists('LUDBSQL') ) {
             $param = $this->verify('param', array('param'=>$params, 'format'=>$formats));
             if ( $param['code'] == 0 ) { return $param; }
 
-            $dml = new LUDml();
+            $dml = new LUWPDml();
             return $dml->insert( $this->tableName, $params, $formats );
         }
 
@@ -111,7 +111,7 @@ if ( !class_exists('LUDBSQL') ) {
 
             return array('code'=>0, 'msg'=>$formatSQL, 'data'=>$columnSQL, 'd'=>$insert_data);
 
-            $dml = new LUDml();
+            $dml = new LUWPDml();
             return $dml->batchInsert( $this->tableName, $insert_data, $columnSQL, $formatSQL );
         }
 
@@ -138,7 +138,7 @@ if ( !class_exists('LUDBSQL') ) {
             $param2 = $this->verify('param', array('param'=>$wheres, 'format'=>$wheresFormat));
             if ( $param2['code'] == 0 ) { return $param2; }
 
-            $dml = new LUDml();
+            $dml = new LUWPDml();
             return $dml->update( $this->tableName, $params, $formats, $wheres, $wheresFormat );
         }
 
@@ -186,7 +186,7 @@ if ( !class_exists('LUDBSQL') ) {
             $sql = $whereSQL;
             $sqlFormat = $formats;
 
-            $dql = new LUDql();
+            $dql = new LUWPDql();
             return $dql->get_col( $this->tableName, $col, $sql, $sqlFormat );
         }
 
@@ -244,7 +244,7 @@ if ( !class_exists('LUDBSQL') ) {
             $sqlFormat = $formats;
             $colSql = ' '.$juhe.'('.$col.') ';
 
-            $dql = new LUDql();
+            $dql = new LUWPDql();
             return $dql->get_var( $this->tableName, $colSql, $sql, $sqlFormat );
         }
 
@@ -324,7 +324,7 @@ if ( !class_exists('LUDBSQL') ) {
 
 //            return array('code'=>-2, 'msg'=>'测试', 'data'=>$sqlFormat);
 
-            $dql = new LUDql();
+            $dql = new LUWPDql();
             return $dql->get_row( $this->tableName, $cols, $sql, $sqlFormat, $output );
         }
 
@@ -404,7 +404,7 @@ if ( !class_exists('LUDBSQL') ) {
 
 //            return array('code'=>1, 'msg'=>'测试', 'data'=>$sql);
 
-            $dql = new LUDql();
+            $dql = new LUWPDql();
             return $dql->get_results( $this->tableName, $cols, $sql, $sqlParams, $output );
         }
 

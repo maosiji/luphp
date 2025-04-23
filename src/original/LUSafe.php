@@ -1,10 +1,4 @@
 <?php
-namespace MAOSIJI\LU;
-
-// 启动会话并设置时区
-session_start();
-date_default_timezone_set('Asia/Shanghai');
-
 /*
  * author               : 猫斯基
  * url                  : maosiji.com
@@ -14,6 +8,10 @@ date_default_timezone_set('Asia/Shanghai');
  * update               :
  * project              : luphp
  */
+namespace MAOSIJI\LU;
+// 启动会话并设置时区
+session_start();
+date_default_timezone_set('Asia/Shanghai');
 if (!class_exists('LUSafe')) {
     class LUSafe
     {

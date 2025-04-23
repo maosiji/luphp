@@ -9,8 +9,8 @@
  * project              : luphp
  */
 namespace MAOSIJI\LU\WP;
-if ( ! class_exists( 'LUSend' ) ) {
-    class LUSend
+if ( ! class_exists( 'LUWPSend' ) ) {
+    class LUWPSend
     {
         function __construct()
         {

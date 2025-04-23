@@ -19,8 +19,8 @@
     RENAME：用于重命名一个对象。
  * */
 namespace MAOSIJI\LU\WP;
-if (!class_exists('LUDdl')) {
-    class LUDdl
+if (!class_exists('LUWPDdl')) {
+    class LUWPDdl
     {
 
         function __construct()

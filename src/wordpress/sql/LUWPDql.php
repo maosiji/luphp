@@ -12,8 +12,8 @@
  * SELECT：用于检索数据库中的数据。
  * */
 namespace MAOSIJI\LU\WP;
-if ( !class_exists('LUDql') ) {
-    class LUDql
+if ( !class_exists('LUWPDql') ) {
+    class LUWPDql
     {
         function __construct()
         {

@@ -10,8 +10,8 @@
  * project              : luphp
  */
 namespace MAOSIJI\LU\WP;
-if (!class_exists('LUNonce')) {
-    class LUNonce
+if (!class_exists('LUWPNonce')) {
+    class LUWPNonce
     {
 
         function __construct()

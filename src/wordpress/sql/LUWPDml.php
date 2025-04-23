@@ -9,14 +9,14 @@
  * project              : luphp
  */
 /*
- *  LUDml 主要用于检索、插入、更新和删除数据库中的数据。它直接处理数据库中的数据内容。常用的 LUDml 命令包括：
+ *  LUWPDml 主要用于检索、插入、更新和删除数据库中的数据。它直接处理数据库中的数据内容。常用的 LUWPDml 命令包括：
     INSERT：用于向数据库表中插入新记录。
     UPDATE：用于更新数据库表中的现有记录。
     DELETE：用于从数据库表中删除记录。
  * */
 namespace MAOSIJI\LU\WP;
-if ( !class_exists('LUDml') ) {
-    class LUDml
+if ( !class_exists('LUWPDml') ) {
+    class LUWPDml
     {
         function __construct() {}
         private function __clone() {}
