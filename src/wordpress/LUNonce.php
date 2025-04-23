@@ -1,5 +1,6 @@
 <?php
 /* 使用时，请继承此类，自定义使用。
+ *
  * author               : 猫斯基
  * url                  : maosiji.com
  * email                : 1394846666@qq.com
@@ -9,7 +10,7 @@
  * project              : luphp
  */
 namespace MAOSIJI\LU\WP;
-if (!class_exists('MAOSIJI\LUPHP\wordpress\LUWPNonce')) {
+if (!class_exists('LUNonce')) {
     class LUNonce
     {
 
