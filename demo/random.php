@@ -11,7 +11,7 @@
 
 require __DIR__ . '/../vendor/autoload.php';
 
-use MAOSIJI\LUPHP\LURandom;
+use MAOSIJI\LUPHP\original\LURandom;
 
 $r = new LURandom();
 

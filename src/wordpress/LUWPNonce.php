@@ -8,19 +8,26 @@
  * update               :
  * project              : luphp
  */
-if ( !class_exists('LUWPNonce') ) {
-    class LUWPNonce {
+namespace MAOSIJI\LU\WP;
+if (!class_exists('MAOSIJI\LUPHP\wordpress\LUWPNonce')) {
+    class LUWPNonce
+    {
 
-        function __construct() {}
+        function __construct()
+        {
+        }
+
         private function __clone()
         {
         }
+
         private function __wakeup()
         {
         }
 
-        private function fe_wp_create_nonce() {
-            if( !function_exists('wp_create_nonce') ){
+        private function fe_wp_create_nonce()
+        {
+            if (!function_exists('wp_create_nonce')) {
                 require_once(ABSPATH . 'wp-includes/pluggable.php');
             }
         }
@@ -30,11 +37,13 @@ if ( !class_exists('LUWPNonce') ) {
          *
          * @return string 生成带有 uid 的 nonce
          */
-        protected function create_nonce( string $str ): string
+        protected function create_nonce(string $str): string
         {
-            if ( empty($str) ) { return false; }
+            if (empty($str)) {
+                return false;
+            }
             $this->fe_wp_create_nonce();
-            return wp_create_nonce( 'luphp-'.(empty($str)?'potkg95486':$str).'-fjrfj59696kg45-'.get_current_user_id() );
+            return wp_create_nonce('luphp-' . (empty($str) ? 'potkg95486' : $str) . '-fjrfj59696kg45-' . get_current_user_id());
         }
 
         /**
@@ -43,11 +52,13 @@ if ( !class_exists('LUWPNonce') ) {
          *
          * @return false|true 验证带有 uid 的 nonce
          */
-        protected function verify_nonce( string $nonce, string $str ): bool
+        protected function verify_nonce(string $nonce, string $str): bool
         {
-            if ( empty($nonce) || empty($str) ) { return false; }
+            if (empty($nonce) || empty($str)) {
+                return false;
+            }
             $this->fe_wp_create_nonce();
-            return wp_verify_nonce( $nonce, 'luphp-'.(empty($str)?'potkg95486':$str).'-fjrfj59696kg45-'.get_current_user_id() );
+            return wp_verify_nonce($nonce, 'luphp-' . (empty($str) ? 'potkg95486' : $str) . '-fjrfj59696kg45-' . get_current_user_id());
         }
 
 

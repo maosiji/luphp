@@ -8,7 +8,7 @@
  * update               :
  * project              : luphp
  */
-namespace MAOSIJI\LUPHP;
+namespace MAOSIJI\LU;
 if (!class_exists('LUFile')) {
     class LUFile
     {

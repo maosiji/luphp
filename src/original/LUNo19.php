@@ -9,7 +9,8 @@
  * project              : library-luphp
  * description          : 生成可验证的19位数字
  */
-namespace MAOSIJI\LUPHP;
+namespace MAOSIJI\LU;
+
 if ( !class_exists('LUNo19') ) {
     class LUNo19 {
 

@@ -10,7 +10,7 @@
  */
 require __DIR__ . '/../vendor/autoload.php';
 
-use MAOSIJI\LUPHP\LUNo19;
+use MAOSIJI\LUPHP\original\LUNo19;
 
 $vd = new LUNo19();
 

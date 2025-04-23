@@ -1,5 +1,5 @@
 <?php
-namespace MAOSIJI\LUPHP;
+namespace MAOSIJI\LU;
 session_start();
 date_default_timezone_set('Asia/Shanghai');
 /*

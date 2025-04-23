@@ -1,5 +1,4 @@
 <?php
-namespace MAOSIJI\LUPHP;
 /*
  * author               : 猫斯基
  * url                  : maosiji.com
@@ -9,6 +8,7 @@ namespace MAOSIJI\LUPHP;
  * update               : 
  * project              : luphp
  */
+namespace MAOSIJI\LU;
 if ( !class_exists('LUCookie') ) {
     class LUCookie {
 

@@ -1,5 +1,4 @@
 <?php
-namespace MAOSIJI\LUPHP;
 /*
  * author               : 猫斯基
  * url                  : maosiji.com
@@ -9,6 +8,8 @@ namespace MAOSIJI\LUPHP;
  * update               :
  * project              : luphp
  */
+namespace MAOSIJI\LU\WP;
+use MAOSIJI\LU\LUSend;
 if ( ! class_exists( 'LUWPSend' ) ) {
     class LUWPSend
     {

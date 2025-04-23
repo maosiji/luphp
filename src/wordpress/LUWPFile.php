@@ -7,8 +7,7 @@
  * update               :
  * project              : luphp
  */
-namespace MAOSIJI\LUPHP;
-
+namespace MAOSIJI\LU\WP;
 if (!class_exists('LUWPFile')) {
     class LUWPFile
     {

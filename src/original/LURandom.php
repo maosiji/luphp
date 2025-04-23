@@ -1,5 +1,5 @@
 <?php
-namespace MAOSIJI\LUPHP;
+namespace MAOSIJI\LU;
 
 /*
  * author               : 猫斯基

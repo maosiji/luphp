@@ -4,7 +4,8 @@
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "MAOSIJI\\LUPHP\\": "src/"
+            "MAOSIJI\\LU\\": "src/original",
+            "MAOSIJI\\LU\\WP\\": "src/wordpress"
         }
     },
     "authors": [

@@ -1,5 +1,5 @@
 <?php
-namespace MAOSIJI\LUPHP;
+namespace MAOSIJI\LU;
 
 // 启动会话并设置时区
 session_start();

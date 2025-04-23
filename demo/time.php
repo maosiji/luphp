@@ -8,7 +8,8 @@
  * project              : luphp
  */
 require __DIR__ . '/../vendor/autoload.php';
-use MAOSIJI\LUPHP\LUTime;
+
+use MAOSIJI\LUPHP\original\LUTime;
 
 // 计算时间差
 $beginTime = time();

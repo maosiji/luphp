@@ -8,7 +8,8 @@
  * project              : luphp
  */
 require __DIR__ . '/../vendor/autoload.php';
-use MAOSIJI\LUPHP\LUUrl;
+
+use MAOSIJI\LUPHP\original\LUUrl;
 
 $luurl = new LUUrl();
 

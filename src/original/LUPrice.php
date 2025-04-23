@@ -8,7 +8,7 @@
  * update               :
  * project              : luphp
  */
-namespace MAOSIJI\LUPHP\Price;
+namespace MAOSIJI\LU;
 
 if (!class_exists('LUPrice')) {
     class LUPrice
