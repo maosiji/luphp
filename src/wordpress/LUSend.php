@@ -9,7 +9,6 @@
  * project              : luphp
  */
 namespace MAOSIJI\LU\WP;
-use MAOSIJI\LU\LUSend;
 if ( ! class_exists( 'LUSend' ) ) {
     class LUSend
     {
@@ -35,7 +34,7 @@ if ( ! class_exists( 'LUSend' ) ) {
         public function send_json(int $code, string $msg, $data = '', string $reload = '', array $newArr = [], int $flags = 0)
         {
             // 格式化响应数据
-            $response = (new LUSend())->send_array($code, $msg, $data, $reload, $newArr);
+            $response = (new \MAOSIJI\LU\LUSend())->send_array($code, $msg, $data, $reload, $newArr);
 
             // 根据状态码选择不同的 WordPress 方法
 //            if ($code === 1) {
