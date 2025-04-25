@@ -45,5 +45,22 @@ if ( !class_exists( 'LUTime' ) ) {
 			
 			return array( "day" => $days, "hour" => $hours, "min" => $mins, "sec" => $secs );
 		}
+
+        /** 计算年龄
+         * @param string $birthday
+         * @return int
+         */
+        public function age( string $birthday )
+        {
+            // 创建出生日期对象
+            $birthDateTime = \DateTime::createFromFormat('Y-m-d', $birthday);
+
+            // 创建当前日期对象
+            $currentDateTime = new \DateTime();
+
+            // 计算日期差
+            return $currentDateTime->diff($birthDateTime)->y;
+        }
+
 	}
 }

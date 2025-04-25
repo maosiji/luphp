@@ -107,6 +107,25 @@ if (!class_exists('LUIdcard')) {
         }
 
         /**
+         * 获取年龄
+         * @param string $idCard
+         * @return int
+         */
+        public function age(string $idCard): int
+        {
+            $birthday = $this->birthday($idCard);
+
+            // 创建出生日期对象
+            $birthDateTime = \DateTime::createFromFormat('Y-m-d', $birthday);
+
+            // 创建当前日期对象
+            $currentDateTime = new \DateTime();
+
+            // 计算日期差
+            return $currentDateTime->diff($birthDateTime)->y;
+        }
+
+        /**
          * 获取省份
          *
          * @param string $idCard 身份证号码
