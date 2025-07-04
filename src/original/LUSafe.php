@@ -16,7 +16,7 @@ if (!class_exists('LUSafe')) {
     class LUSafe
     {
         // 默认时间间隔（秒）
-        const DEFAULT_TIME_INTERVAL = 5;
+        const DEFAULT_TIME_INTERVAL = 3;
 
         /**
          * 构造函数
@@ -32,7 +32,7 @@ if (!class_exists('LUSafe')) {
         /**
          * 检查是否连续点击 AJAX 按钮，并禁止
          *
-         * @param int $timediff 时间间隔（秒），默认 5 秒
+         * @param int $timediff 时间间隔（秒），默认 3 秒
          * @param string $errorMessage 自定义错误信息
          */
         public function check_too_many_requests(int $timediff = self::DEFAULT_TIME_INTERVAL)

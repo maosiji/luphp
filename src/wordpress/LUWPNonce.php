@@ -1,5 +1,5 @@
 <?php
-/* 使用时，请继承此类，自定义使用。
+/*
  *
  * author               : 猫斯基
  * url                  : maosiji.com
@@ -38,7 +38,7 @@ if (!class_exists('LUWPNonce')) {
          *
          * @return string 生成带有 uid 的 nonce
          */
-        protected function create_nonce(string $str): string
+        public function create_nonce(string $str): string
         {
             if (empty($str)) {
                 return false;
@@ -53,7 +53,7 @@ if (!class_exists('LUWPNonce')) {
          *
          * @return false|true 验证带有 uid 的 nonce
          */
-        protected function verify_nonce(string $nonce, string $str): bool
+        public function verify_nonce(string $nonce, string $str): bool
         {
             if (empty($nonce) || empty($str)) {
                 return false;

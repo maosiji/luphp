@@ -21,21 +21,21 @@ if ( !class_exists('LUCookie') ) {
          */
         public function set( string $key, string $value, int $timediff=600 )
         {
-            setcookie($key, $value, $timediff, '/');
+            if ($timediff < 0) {
+                throw new \InvalidArgumentException("过期时间不能为负数");
+            }
+
+            setcookie($key, $value, time() + $timediff, '/');
         }
 
         /**
          * @param string $key	        : 键
          *
-         * @return string                : 若该key存在，则返回其值
+         * @return string|null          :  如果键不存在，返回 null
          */
-        public function get( string $key ): string
+        public function get( string $key )
         {
-            if ( isset( $_COOKIE[$key] ) ) {
-                return $_COOKIE[$key];
-            }
-
-            return '';
+            return $_COOKIE[$key] ?? '';
         }
 
         /**
@@ -46,11 +46,7 @@ if ( !class_exists('LUCookie') ) {
          */
         public function check( string $key, string $value ): bool
         {
-            if ( isset( $_COOKIE[$key] ) && $_COOKIE[$key] === $value ) {
-                return true;
-            }
-
-            return false;
+            return isset( $_COOKIE[$key] ) && $_COOKIE[$key] === $value;
         }
 
         /**
@@ -60,6 +56,7 @@ if ( !class_exists('LUCookie') ) {
         {
             if ( isset( $_COOKIE[$key] ) ) {
                 setcookie($key, '', time() - 3600, '/');
+                unset( $_COOKIE[$key] );
             }
         }
 

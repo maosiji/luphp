@@ -68,8 +68,14 @@ if (!class_exists('LUCurl')) {
             $output = curl_exec($ch);
             curl_close($ch);
 
-            // 返回解码后的 JSON 数据
-            return json_decode($output, true) ?? [];
+            // 如果是json数据，则解析；否则，不解析
+            if ( $this->isStrictJson($output) ) {
+                // 返回解码后的 JSON 数据
+                return json_decode($output, true) ?? [];
+            } else {
+                // 返回解码后的 JSON 数据
+                return [$output] ?? [];
+            }
         }
 
         /**
@@ -80,8 +86,12 @@ if (!class_exists('LUCurl')) {
          * @param bool $overwrite 是否覆盖默认头信息
          * @return array 解码后的响应数据
          */
-        public function get(string $url, array $headers = [], bool $overwrite = false): array
+        public function get(string $url, array $queryParams=[], array $headers = [], bool $overwrite = false): array
         {
+            if ( !empty($queryParams) ) {
+                $url .= (parse_url($url, PHP_URL_QUERY) ? '&' : '?') . http_build_query($queryParams);
+            }
+
             return $this->request('GET', $url, [], $headers, $overwrite);
         }
 
@@ -141,6 +151,15 @@ if (!class_exists('LUCurl')) {
             return $this->request('PATCH', $url, $data, $headers, $overwrite);
         }
 
+        private function isStrictJson($string) {
+            // 确保输入是非空字符串
+            if (!is_string($string) || trim($string) === '') {
+                return false;
+            }
+
+            $decoded = json_decode($string);
+            return $decoded !== null && json_last_error() === JSON_ERROR_NONE;
+        }
 
 
     }
