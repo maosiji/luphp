@@ -13,8 +13,8 @@ if (!class_exists('LUCurl')) {
     class LUCurl
     {
         const DEFAULT_HEADERS = [
-            "Content-type: application/json",
-            "Accept: application/json"
+            "Accept: application/json",
+            "Content-type: application/json;charset=utf-8"
         ];
 
         public function __construct() {}
@@ -43,9 +43,10 @@ if (!class_exists('LUCurl')) {
          * @param array $data 请求数据（仅对 POST, PUT, PATCH, DELETE 有效）
          * @param array $headers 自定义头信息
          * @param bool $overwrite 是否覆盖默认头信息
+         * @param string $dataStr :请求字符串数据。当存在时，忽略 $data
          * @return array 返回解码后的响应数据
          */
-        private function request(string $method, string $url, array $data = [], array $headers = [], bool $overwrite = false): array
+        private function request(string $method, string $url, array $data = [], array $headers = [], bool $overwrite = false, string $dataStr=''): array
         {
             // 合并头信息
             $headerArray = $this->getHeaderArray(self::DEFAULT_HEADERS, $headers, $overwrite);
@@ -61,7 +62,7 @@ if (!class_exists('LUCurl')) {
             // 根据请求方法设置选项
             if ($method === 'POST' || $method === 'PUT' || $method === 'PATCH' || $method === 'DELETE') {
                 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
-                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $dataStr ? $dataStr : json_encode($data) );
             }
 
             // 执行请求并关闭连接
@@ -102,11 +103,12 @@ if (!class_exists('LUCurl')) {
          * @param array $data 请求数据
          * @param array $headers 自定义头信息
          * @param bool $overwrite 是否覆盖默认头信息
+         * @param string $dataStr :请求字符串数据。当存在时，忽略 $data
          * @return array 解码后的响应数据
          */
-        public function post(string $url, array $data, array $headers = [], bool $overwrite = false): array
+        public function post(string $url, array $data, array $headers = [], bool $overwrite = false, string $dataStr=''): array
         {
-            return $this->request('POST', $url, $data, $headers, $overwrite);
+            return $this->request('POST', $url, $data, $headers, $overwrite, $dataStr );
         }
 
         /**
