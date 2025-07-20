@@ -14,7 +14,7 @@
     UPDATE：用于更新数据库表中的现有记录。
     DELETE：用于从数据库表中删除记录。
  * */
-namespace MAOSIJI\LU\WP;
+namespace MAOSIJI\LU\WP\SQL;
 use MAOSIJI\LU\LUSend;
 
 if ( ! defined( 'ABSPATH' ) ) { die; }

@@ -8,7 +8,7 @@
  * update               :
  * project              : luphp
  */
-namespace MAOSIJI\LU\WP;
+namespace MAOSIJI\LU\WP\SQL;
 use MAOSIJI\LU\LUSend;
 
 if ( ! defined( 'ABSPATH' ) ) { die; }

@@ -11,7 +11,7 @@
 /*
  * SELECT：用于检索数据库中的数据。
  * */
-namespace MAOSIJI\LU\WP;
+namespace MAOSIJI\LU\WP\SQL;
 use MAOSIJI\LU\LUSend;
 
 if ( ! defined( 'ABSPATH' ) ) { die; }
