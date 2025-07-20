@@ -19,11 +19,11 @@ if ( !class_exists('LUWPDBSQL') ) {
         protected $tableName;
         private static $instances = [];
 
-        private function __construct( $tableName )
+        private function __construct( string $tableName )
         {
             $this->tableName = $tableName;
         }
-        public static function getObj( $tableName )
+        public static function getObj( string $tableName )
         {
             // 使用 get_called_class() 确保每个子类都有自己的实例
             $calledClass = get_called_class();
