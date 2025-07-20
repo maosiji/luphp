@@ -58,7 +58,7 @@ if ( !class_exists('LUWPDBSQL') ) {
             }
 
             $ddl = new LUWPDDL();
-            $ddl->createTable( $this->tableName, $sql );
+            return $ddl->createTable( $this->tableName, $sql );
         }
 
         /**

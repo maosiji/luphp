@@ -19,6 +19,8 @@
     RENAME：用于重命名一个对象。
  * */
 namespace MAOSIJI\LU\WP\SQL;
+use MAOSIJI\LU\LUSend;
+
 if ( ! defined( 'ABSPATH' ) ) { die; }
 if (!class_exists('LUWPDDL')) {
     class LUWPDDL
@@ -34,7 +36,7 @@ if (!class_exists('LUWPDDL')) {
          * 创建表
          * @param $tableNameNoPrefix
          * @param $sql
-         * @return bool
+         * @return
          */
         public function createTable( string $tableNameNoPrefix, string $sql )
         {
@@ -50,7 +52,15 @@ if (!class_exists('LUWPDDL')) {
                 ";
 
                 require_once ABSPATH . "wp-admin/includes/upgrade.php";
-                dbDelta($sqls);
+                $result = dbDelta($sqls);
+
+                if (in_array("Created table $table_name", $result)) {
+                    return (new LUSend())->send_array( 1, $table_name.'表已创建', $result );
+                } elseif (in_array("Table $table_name already exists", $result)) {
+                    return (new LUSend())->send_array( -1, $table_name.'表已存在', $result );
+                } else {
+                    return (new LUSend())->send_array( 0, $table_name.'表结构已更新 或 失败', $result );
+                }
             }
 
         }
