@@ -6,7 +6,7 @@
         "psr-4": {
             "MAOSIJI\\LU\\": "src/original",
             "MAOSIJI\\LU\\WP\\": "src/wordpress",
-            "MAOSIJI\\LU\\WP\\sql\\": "src/wordpress"
+            "MAOSIJI\\LU\\WP\\SQL\\": "src/wordpress/sql"
         }
     },
     "authors": [
