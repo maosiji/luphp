@@ -10,6 +10,7 @@
  * project              : luphp
  */
 namespace MAOSIJI\LU\WP;
+if ( ! defined( 'ABSPATH' ) ) { die; }
 if (!class_exists('LUWPNonce')) {
     class LUWPNonce
     {

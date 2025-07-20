@@ -9,9 +9,12 @@
  * project              : luphp
  */
 namespace MAOSIJI\LU\WP;
-if ( !class_exists('LUWPDBSQL') ) {
+use MAOSIJI\LU\LUSend;
 
-    abstract class LUWPDBSQL {
+if ( ! defined( 'ABSPATH' ) ) { die; }
+if ( !class_exists('DBSQL') ) {
+
+    abstract class DBSQL {
 
         protected $tableName;
         private static $instances = [];
@@ -43,37 +46,41 @@ if ( !class_exists('LUWPDBSQL') ) {
 
         }
 
-        /** 创建数据表结构
+        /**
+         * 创建数据表结构
          * @param $sql :创建表的语句
          * @return array|void
          */
         protected function create_table( string $sql )
         {
             if ( empty($sql) ) {
-                return array( 'code'=>0, 'msg'=>'SQL语句是空的。', 'data'=>$sql );
+                return (new LUSend())->send_array(0, 'SQL语句是空的', $sql );
             }
 
-            $ddl = new LUWPDdl();
+            $ddl = new LUWPDDL();
             $ddl->createTable( $this->tableName, $sql );
         }
 
-        /** 更新数据表结构
+        /**
+         * 更新数据表结构
          * @return array
          */
-        private function update_table()
+        protected function update_table()
         {
 
         }
 
-        /** 删除数据表
+        /**
+         * 删除数据表
          * @return array
          */
-        private function deleteTable()
+        protected function deleteTable()
         {
 
         }
 
-        /**插入1行
+        /**
+         * 插入1行
          * @param $params   : 插入的数据数组
          * @param $formats  : 插入的数据数组对应的格式数组
          * @return array
@@ -84,11 +91,12 @@ if ( !class_exists('LUWPDBSQL') ) {
             $param = $this->verify('param', array('param'=>$params, 'format'=>$formats));
             if ( $param['code'] == 0 ) { return $param; }
 
-            $dml = new LUWPDml();
+            $dml = new LUWPDML();
             return $dml->insert( $this->tableName, $params, $formats );
         }
 
-        /**插入多行【未测试】
+        /**
+         * 插入多行【未测试】
          * @param array $data           :要插入的数据（二维数组）
          * @param array $columns        :列名数组
          * @param array $formats        :数据格式（如 '%s', '%d'）数组
@@ -109,13 +117,14 @@ if ( !class_exists('LUWPDBSQL') ) {
             $columnSQL    = '`' . implode('`, `', $columns) . '`'; // 列名
             $formatSQL  = implode(', ', $format);
 
-            return array('code'=>0, 'msg'=>$formatSQL, 'data'=>$columnSQL, 'd'=>$insert_data);
+//            return array('code'=>0, 'msg'=>$formatSQL, 'data'=>$columnSQL, 'd'=>$insert_data);
 
-            $dml = new LUWPDml();
+            $dml = new LUWPDML();
             return $dml->batchInsert( $this->tableName, $insert_data, $columnSQL, $formatSQL );
         }
 
-        /** 更新
+        /**
+         * 更新1行
          * @param $params           : 更新的数据数组
          * @param $formats          : 更新的数据数组对应的格式数组
          * @param $wheres           : Where条件数据数组
@@ -138,11 +147,12 @@ if ( !class_exists('LUWPDBSQL') ) {
             $param2 = $this->verify('param', array('param'=>$wheres, 'format'=>$wheresFormat));
             if ( $param2['code'] == 0 ) { return $param2; }
 
-            $dml = new LUWPDml();
+            $dml = new LUWPDML();
             return $dml->update( $this->tableName, $params, $formats, $wheres, $wheresFormat );
         }
 
-        /** 查询1列
+        /**
+         * 查询1列
          * @param $where                : (array) where的数组，必须包含元素 array('meta'=>array(),'compare=>array(),'format'=>array())
          *                                          meta : array(字段名称=>字段值)
          *                                          compare : array('=') 运算符数组（=、<、LIKE等）
@@ -186,11 +196,12 @@ if ( !class_exists('LUWPDBSQL') ) {
             $sql = $whereSQL;
             $sqlFormat = $formats;
 
-            $dql = new LUWPDql();
+            $dql = new LUWPDQL();
             return $dql->get_col( $this->tableName, $col, $sql, $sqlFormat );
         }
 
-        /** 查询1列的值并进行聚合运算
+        /**
+         * 查询1列的值并进行聚合运算
          * @param $where                : (array) where的数组，必须包含元素 array('meta'=>array(),'compare=>array(),'format'=>array())
          *                                          meta : array(字段名称=>字段值)
          *                                          compare : array('=') 运算符数组（=、<、LIKE等）
@@ -244,11 +255,12 @@ if ( !class_exists('LUWPDBSQL') ) {
             $sqlFormat = $formats;
             $colSql = ' '.$juhe.'('.$col.') ';
 
-            $dql = new LUWPDql();
+            $dql = new LUWPDQL();
             return $dql->get_var( $this->tableName, $colSql, $sql, $sqlFormat );
         }
 
-        /** 查询1行
+        /**
+         * 查询1行
          * @param $where                : (array) where的数组，必须包含元素 array('meta'=>array(),'compare=>array(),'format'=>array())
          *                                          meta : array(字段名称=>字段值)
          *                                          compare : array('=') 运算符数组（=、<、LIKE等）
@@ -324,11 +336,12 @@ if ( !class_exists('LUWPDBSQL') ) {
 
 //            return array('code'=>-2, 'msg'=>'测试', 'data'=>$sqlFormat);
 
-            $dql = new LUWPDql();
+            $dql = new LUWPDQL();
             return $dql->get_row( $this->tableName, $cols, $sql, $sqlFormat, $output );
         }
 
-        /** 查询多行
+        /**
+         * 查询多行
          * @param $where                : (array) where的数组，必须包含元素 array('meta'=>'','compare=>'','format'=>'')
          *                                          meta : array(字段名称=>字段值)
          *                                          compare : array('=') 运算符数组（=、<、LIKE等）
@@ -402,13 +415,14 @@ if ( !class_exists('LUWPDBSQL') ) {
             $sql = $whereSQL.$orderSortSQL.$limitSQL;
             $sqlParams = $params;
 
-//            return array('code'=>1, 'msg'=>'测试', 'data'=>$sql);
+//            return array('code'=>0, 'msg'=>'测试', 'data2'=>$sql, 'data3'=>$orderSort);
 
-            $dql = new LUWPDql();
+            $dql = new LUWPDQL();
             return $dql->get_results( $this->tableName, $cols, $sql, $sqlParams, $output );
         }
 
-        /** 数据验证
+        /**
+         * 数据验证
          * @param $args_name    : 验证的名称
          * @param $args         : 验证的数组
          * @return array
@@ -512,7 +526,8 @@ if ( !class_exists('LUWPDBSQL') ) {
             return array('code'=>1, 'msg'=>'检测通过', 'data'=>$args);
         }
 
-        /** 根据编号查询是否有记录，在主表中为每条的编号，在meta表中为主表的编号
+        /**
+         * 根据编号查询是否有记录，在主表中为每条的编号，在meta表中为主表的编号
          * @param $no : 编号
          * @return array
          */
@@ -537,7 +552,8 @@ if ( !class_exists('LUWPDBSQL') ) {
             return $this->get_row($where);
         }
 
-        /** 获取总条目数
+        /**
+         * 获取总条目数
          * @return array
          */
         protected function get_total_num()

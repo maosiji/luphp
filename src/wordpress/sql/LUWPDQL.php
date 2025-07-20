@@ -12,8 +12,11 @@
  * SELECT：用于检索数据库中的数据。
  * */
 namespace MAOSIJI\LU\WP;
-if ( !class_exists('LUWPDql') ) {
-    class LUWPDql
+use MAOSIJI\LU\LUSend;
+
+if ( ! defined( 'ABSPATH' ) ) { die; }
+if ( !class_exists('LUWPDQL') ) {
+    class LUWPDQL
     {
         function __construct()
         {
@@ -21,8 +24,10 @@ if ( !class_exists('LUWPDql') ) {
         private function __clone()
         {
         }
+        private function __wakeup(){}
 
         /**
+         * 获取一列数据
          * @param $tableNameNoPrefix    : 没有前缀的表名
          * @param $col                  : 选择特定列，只能写一个。
          * @param $sql                  : SQL语句
@@ -43,20 +48,21 @@ if ( !class_exists('LUWPDql') ) {
 
                 // 失败
                 if ( $return===null ) {
-                    return array('code'=>0, 'msg'=>'col 查询失败', 'data'=>$return);
+                    return (new LUSend())->send_array(0, 'col 查询失败', $return);
                 }
 
                 if ( count($return)===0 ) {
-                    return array('code'=>-1, 'msg'=>'col 未查询到', 'data'=>$return);
+                    return (new LUSend())->send_array(-1, 'col 未查询到', $return);
                 }
 
-                return array('code'=>1, 'msg'=>'col 已查询到', 'data'=>$return);
+                return (new LUSend())->send_array(1, 'col 已查询到', $return);
             }
 
-            return array('code'=>0, 'msg'=>'col 表名不存在', 'data'=>'');
+            return (new LUSend())->send_array(0, 'col 表名不存在', '');
         }
 
         /**
+         * 获取聚合数据
          * @param $tableNameNoPrefix    : 没有前缀的表名
          * @param $colSql               : 聚合sql
          * @param $sql                  : SQL语句
@@ -77,21 +83,22 @@ if ( !class_exists('LUWPDql') ) {
 
                 // 失败
                 if ( $return===null ) {
-                    return array('code'=>0, 'msg'=>'var 查询失败', 'data'=>$return);
+                    return (new LUSend())->send_array(0, 'var 查询失败', $return);
                 }
 
                 // 未查询到
                 if ( $return==='0' ) {
-                    return array('code'=>-1, 'msg'=>'var 未查询到', 'data'=>$return);
+                    return (new LUSend())->send_array(-1, 'var 未查询到', $return);
                 }
 
-                return array('code'=>1, 'msg'=>'var 已查询到', 'data'=>$return);
+                return (new LUSend())->send_array(1, 'var 已查询到', $return);
             }
 
-            return array('code'=>0, 'msg'=>'var 表名不存在', 'data'=>'');
+            return (new LUSend())->send_array(0, 'var 表名不存在', '');
         }
 
         /**
+         * 获取一行数据
          * @param $tableNameNoPrefix    : 没有前缀的表名
          * @param $cols                 : 特定列或全部
          * @param $sql                  : SQL语句
@@ -113,20 +120,21 @@ if ( !class_exists('LUWPDql') ) {
 
                 // 查询失败
                 if ( !empty($wpdb->last_error) ) {
-                    return array('code'=>0, 'msg'=>'row 查询失败', 'data'=>esc_html($wpdb->last_error) );
+                    return (new LUSend())->send_array(0, 'row 查询失败', esc_html($wpdb->last_error) );
                 }
 
                 if ( $return===null ) {
-                    return array('code'=>-1, 'msg'=>'row 未查询到', 'data'=>$return);
+                    return (new LUSend())->send_array(-1, 'row 未查询到', $return);
                 }
 
-                return array('code'=>1, 'msg'=>'row 已查询到', 'data'=>$return);
+                return (new LUSend())->send_array(1, 'row 已查询到', $return);
             }
 
-            return array('code'=>0, 'msg'=>'row 表名不存在', 'data'=>'');
+            return (new LUSend())->send_array(0, 'row 表名不存在', '');
         }
 
         /**
+         * 获取多行数据
          * @param $tableNameNoPrefix        : 没有前缀的表名
          * @param $cols                     : 特定列或全部
          * @param $sql                      : SQL语句
@@ -148,20 +156,21 @@ if ( !class_exists('LUWPDql') ) {
 
                 // 查询失败
                 if ( !empty($wpdb->last_error) ) {
-                    return array('code'=>0, 'msg'=>'results 查询失败', 'data'=>esc_html($wpdb->last_error) );
+                    return (new LUSend())->send_array(0, 'results 查询失败', esc_html($wpdb->last_error) );
                 }
 
                 if ( count($return)===0 ) {
-                    return array('code'=>-1, 'msg'=>'results 未查询到', 'data'=>$return);
+                    return (new LUSend())->send_array(-1, 'results 未查询到', $return);
                 }
 
-                return array('code'=>1, 'msg'=>'results 已查询到', 'data'=>$return);
+                return (new LUSend())->send_array(1, 'results 已查询到', $return);
             }
 
-            return array('code'=>0, 'msg'=>'results 表名不存在', 'data'=>'');
+            return (new LUSend())->send_array(0, 'results 表名不存在', '');
         }
 
-        /** $wpdb->query
+        /**
+         * $wpdb->query 未完成
          * @return array
          */
         public function query()

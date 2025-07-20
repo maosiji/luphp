@@ -19,19 +19,22 @@
     RENAME：用于重命名一个对象。
  * */
 namespace MAOSIJI\LU\WP;
-if (!class_exists('LUWPDdl')) {
-    class LUWPDdl
+if ( ! defined( 'ABSPATH' ) ) { die; }
+if (!class_exists('LUWPDDL')) {
+    class LUWPDDL
     {
 
         function __construct()
         {
         }
         private function __clone() {}
+        private function __wakeup() {}
 
         /**
+         * 创建表
          * @param $tableNameNoPrefix
          * @param $sql
-         * @return bool 创建表
+         * @return bool
          */
         public function createTable( string $tableNameNoPrefix, string $sql )
         {
