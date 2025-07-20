@@ -12,9 +12,9 @@ namespace MAOSIJI\LU\WP;
 use MAOSIJI\LU\LUSend;
 
 if ( ! defined( 'ABSPATH' ) ) { die; }
-if ( !class_exists('DBSQL') ) {
+if ( !class_exists('LUWPDBSQL') ) {
 
-    abstract class DBSQL {
+    abstract class LUWPDBSQL {
 
         protected $tableName;
         private static $instances = [];
