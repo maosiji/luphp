@@ -32,7 +32,7 @@ if ( ! class_exists( 'LUWPSend' ) ) {
          * @param string    $reload : 是否刷新页面 （0 不跳转，1 刷新当前页面，'https://maosiji.com' 跳转到该链接）
          * @param array  	$newArr : 需要合并的数组
          */
-        public function send_json(int $code, string $msg, $data = '', string $reload = '', array $newArr = [], int $flags = 0)
+        public function send_json( int $code, string $msg, $data = '', string $reload = '', array $newArr = [], int $flags = 0)
         {
             // 格式化响应数据
             $response = (new \MAOSIJI\LU\LUSend())->send_array($code, $msg, $data, $reload, $newArr);
@@ -47,6 +47,15 @@ if ( ! class_exists( 'LUWPSend' ) ) {
 //            }
         }
 
+        /**
+         * WP原生 发送 自定义数组，并终止程序
+         * @param array $arr
+         * @param int $flags
+         * @return void
+         */
+        public function send_array_2_json( array $arr, int $flags = 0 ) {
+            wp_send_json($arr, 200, $flags);
+        }
 
 
 

@@ -59,6 +59,17 @@ if ( ! class_exists( 'LUSend' ) ) {
             exit();
         }
 
+        /**
+         * 发送 自定义数据，并终止程序
+         * @param array $arr
+         * @return void
+         */
+        public function send_array_2_json(array $arr )
+        {
+            header('Content-Type: application/json');
+            echo json_encode( $arr );
+            exit();
+        }
 
 
 
