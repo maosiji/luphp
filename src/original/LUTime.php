@@ -1,5 +1,4 @@
 <?php
-namespace MAOSIJI\LU;
 /*
  * author               : 猫斯基
  * url                  : maosiji.com
@@ -8,6 +7,8 @@ namespace MAOSIJI\LU;
  * update               :
  * project              : luphp
  */
+
+namespace MAOSIJI\LU;
 if ( !class_exists( 'LUTime' ) ) {
 	class LUTime
 	{
