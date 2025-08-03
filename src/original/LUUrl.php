@@ -23,6 +23,16 @@ if ( !class_exists( 'LUUrl' ) ) {
         }
 
         /**
+         * 获取当前链接的域名部分
+         * @param string|null $url
+         * @return string
+         */
+        public function get_host( string $url=null ): string
+        {
+            return parse_url( $url??$_SERVER['HTTP_HOST'], PHP_URL_HOST );
+        }
+
+        /**
          * 获取当前链接
          *
          * @param bool $isFilterParams 是否过滤查询参数，默认为 false
