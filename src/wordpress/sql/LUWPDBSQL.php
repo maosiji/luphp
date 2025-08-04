@@ -65,7 +65,7 @@ if ( !class_exists('LUWPDBSQL') ) {
          * 更新数据表结构
          * @return array
          */
-        protected function update_table()
+        private function update_table()
         {
 
         }
@@ -74,7 +74,7 @@ if ( !class_exists('LUWPDBSQL') ) {
          * 删除数据表
          * @return array
          */
-        protected function deleteTable()
+        private function deleteTable()
         {
 
         }
@@ -121,6 +121,22 @@ if ( !class_exists('LUWPDBSQL') ) {
 
             $dml = new LUWPDML();
             return $dml->batchInsert( $this->tableName, $insert_data, $columnSQL, $formatSQL );
+        }
+
+        /**
+         * 删除符合条件的行
+         * @param array $wheres
+         * @param array $wheresFormat
+         * @return array
+         */
+        protected function delete( array $wheres, array $wheresFormat )
+        {
+            // 检测  输入是否正确
+            $param2 = $this->verify('param', array('param'=>$wheres, 'format'=>$wheresFormat));
+            if ( $param2['code'] == 0 ) { return $param2; }
+
+            $dml = new LUWPDML();
+            return $dml->delete( $this->tableName, $wheres, $wheresFormat );
         }
 
         /**
@@ -422,6 +438,43 @@ if ( !class_exists('LUWPDBSQL') ) {
         }
 
         /**
+         * 根据编号查询是否有记录，在主表中为每条的编号，在meta表中为主表的编号
+         * @param $no : 编号
+         * @return array
+         */
+        protected function get_no( string $no ): array
+        {
+            if ( empty($no) ) {
+                return array('code'=>0, 'msg'=>'$no 为空', 'data'=>$no);
+            }
+
+            $where = array(
+                'meta'  => array(
+                    'no'    => $no,
+                ),
+                'compare'   => array(
+                    '='
+                ),
+                'format'    => array(
+                    '%s'
+                )
+            );
+
+            return $this->get_row($where);
+        }
+
+        /**
+         * 获取总条目数
+         * @return array
+         */
+        protected function get_total_num()
+        {
+            return $this->get_var( array() );
+        }
+
+
+
+        /**
          * 数据验证
          * @param $args_name    : 验证的名称
          * @param $args         : 验证的数组
@@ -525,45 +578,6 @@ if ( !class_exists('LUWPDBSQL') ) {
 
             return array('code'=>1, 'msg'=>'检测通过', 'data'=>$args);
         }
-
-        /**
-         * 根据编号查询是否有记录，在主表中为每条的编号，在meta表中为主表的编号
-         * @param $no : 编号
-         * @return array
-         */
-        protected function get_no( string $no ): array
-        {
-            if ( empty($no) ) {
-                return array('code'=>0, 'msg'=>'$no 为空', 'data'=>$no);
-            }
-
-            $where = array(
-                'meta'  => array(
-                    'no'    => $no,
-                ),
-                'compare'   => array(
-                    '='
-                ),
-                'format'    => array(
-                    '%s'
-                )
-            );
-
-            return $this->get_row($where);
-        }
-
-        /**
-         * 获取总条目数
-         * @return array
-         */
-        protected function get_total_num()
-        {
-            return $this->get_var( array() );
-        }
-
-
-
-
     }
 
 }
