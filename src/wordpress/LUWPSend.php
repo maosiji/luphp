@@ -20,9 +20,6 @@ if ( ! class_exists( 'LUWPSend' ) ) {
         private function __clone()
         {
         }
-        private function __wakeup()
-        {
-        }
 
         /**
          * WP原生 发送 格式化数组，并终止程序

@@ -19,9 +19,6 @@ if (!class_exists('LUIp')) {
         private function __clone()
         {
         }
-        private function __wakeup()
-        {
-        }
 
         /**
          * 获取用户IP

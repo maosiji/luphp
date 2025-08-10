@@ -20,9 +20,6 @@ if (!class_exists('LUIdcard')) {
         private function __clone()
         {
         }
-        private function __wakeup()
-        {
-        }
 
         /**
          * 判断身份证是否合法

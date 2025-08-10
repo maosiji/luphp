@@ -18,9 +18,6 @@ if (!class_exists('LUFile')) {
         private function __clone()
         {
         }
-        private function __wakeup()
-        {
-        }
 
         /**
          * WP批量上传

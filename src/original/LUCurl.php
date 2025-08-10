@@ -20,7 +20,6 @@ if (!class_exists('LUCurl')) {
         public function __construct() {}
 
         private function __clone() {}
-        private function __wakeup() {}
 
         /**
          * 合并或覆盖默认头信息

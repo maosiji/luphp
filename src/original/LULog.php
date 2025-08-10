@@ -26,9 +26,6 @@ if (!class_exists('LULog')) {
         private function __clone()
         {
         }
-        private function __wakeup()
-        {
-        }
 
         /**
          * 在网站根目录创建一个文件并写入信息

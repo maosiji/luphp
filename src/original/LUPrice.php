@@ -23,9 +23,6 @@ if (!class_exists('LUPrice')) {
         private function __clone()
         {
         }
-        private function __wakeup()
-        {
-        }
 
         /**
          * 格式化价格为两位小数的字符串格式

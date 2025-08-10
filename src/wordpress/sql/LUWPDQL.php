@@ -24,7 +24,6 @@ if ( !class_exists('LUWPDQL') ) {
         private function __clone()
         {
         }
-        private function __wakeup(){}
 
         /**
          * 获取一列数据

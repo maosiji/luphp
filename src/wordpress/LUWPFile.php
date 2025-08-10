@@ -22,7 +22,6 @@ if (!class_exists('LUWPFile')) {
         }
 
         private function __clone() {}
-        private function __wakeup() {}
 
         /**
          * 批量上传文件到 WordPress /uploads/ 目录

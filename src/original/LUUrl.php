@@ -18,9 +18,6 @@ if ( !class_exists( 'LUUrl' ) ) {
         private function __clone()
         {
         }
-        private function __wakeup()
-        {
-        }
 
         /**
          * 获取当前链接的域名部分

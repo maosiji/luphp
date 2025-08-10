@@ -29,12 +29,6 @@ if (!class_exists('LURandom')) {
         {
         }
 
-        /**
-         * 防止反序列化
-         */
-        private function __wakeup()
-        {
-        }
 
         /**
          * 生成指定长度的随机数字字符串

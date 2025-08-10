@@ -41,10 +41,6 @@ if ( !class_exists('LUWPDBSQL') ) {
         private function __clone()
         {
         }
-        private function __wakeup()
-        {
-
-        }
 
         /**
          * 创建数据表结构

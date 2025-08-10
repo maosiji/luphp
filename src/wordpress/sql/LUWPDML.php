@@ -23,7 +23,6 @@ if ( !class_exists('LUWPDML') ) {
     {
         function __construct() {}
         private function __clone() {}
-        private function __wakeup() {}
 
         /**
          * 添加表条目

@@ -23,9 +23,6 @@ if (!class_exists('LUWPNonce')) {
         {
         }
 
-        private function __wakeup()
-        {
-        }
 
         private function fe_wp_create_nonce()
         {

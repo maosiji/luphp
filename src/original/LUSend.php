@@ -19,9 +19,6 @@ if ( ! class_exists( 'LUSend' ) ) {
         private function __clone()
         {
         }
-        private function __wakeup()
-        {
-        }
 
         /**
          * 将数组格式化

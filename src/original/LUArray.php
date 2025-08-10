@@ -16,12 +16,6 @@ if ( !class_exists('LUArray') ) {
         public function __construct()
         {
         }
-        public function __clone()
-        {
-        }
-        public function __wakeup()
-        {
-        }
 
 
         /**

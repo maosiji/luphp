@@ -30,7 +30,6 @@ if (!class_exists('LUWPDDL')) {
         {
         }
         private function __clone() {}
-        private function __wakeup() {}
 
         /**
          * 创建表
