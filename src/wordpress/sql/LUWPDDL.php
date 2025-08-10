@@ -47,7 +47,7 @@ if (!class_exists('LUWPDDL')) {
                 $sqls = "
                     CREATE TABLE " . $table_name . " (
                         ".$sql."
-                    ) ENGINE=InnoDB DEFAULT CHARSET=" . $charset_collate . " COLLATE=utf8mb4_unicode_520_ci
+                    ) ENGINE=InnoDB " . $charset_collate . "
                 ";
 
                 require_once ABSPATH . "wp-admin/includes/upgrade.php";
