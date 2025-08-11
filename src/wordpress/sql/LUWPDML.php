@@ -204,7 +204,7 @@ if ( !class_exists('LUWPDML') ) {
                 }
 
                 try {
-                    $sql = "DELETE FROM {$table_name} WHERE {$whereMeta} {$whereCompare} ($whereFormat)";
+                    $sql = "DELETE FROM {$table_name} WHERE {$whereMeta} {$whereCompare} ({$whereFormat})";
                     $deleted = $wpdb->query($wpdb->prepare($sql, $params));
 
                     if ( $deleted===false ) {
