@@ -8,17 +8,19 @@
  * update               :
  * project              : luphp
  */
+
 namespace MAOSIJI\LU\WP\SQL;
 use MAOSIJI\LU\LUSend;
 
 if ( ! defined( 'ABSPATH' ) ) { die; }
 if ( !class_exists('LUWPDBSQL') ) {
-
+    /**
+     * @deprecated 将在 v0.1.51 中重构，请尽快迁移，使用 LUWPDBSQL2 的方法。
+     * @link https://github.com/maosij/luphp/wiki/DB-Migration-Guide 查看迁移指南
+     */
     abstract class LUWPDBSQL {
-
         protected $tableName;
         private static $instances = [];
-
         private function __construct( string $tableName )
         {
             $this->tableName = $tableName;

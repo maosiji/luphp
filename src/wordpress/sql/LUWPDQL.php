@@ -33,16 +33,17 @@ if ( !class_exists('LUWPDQL') ) {
          * @param $sqlFormat            : 格式数组
          * @return array
          */
-        public function get_col( string $tableNameNoPrefix, string $col, string $sql, array $sqlFormat )
+        public function get_col( string $tableNameNoPrefix, string $col, string $whereSQL, array $whereValue ): array
         {
             global $wpdb;
             $table_name = $wpdb->prefix . $tableNameNoPrefix;
             if ( $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") == $table_name ) {
 
-                if ( empty($sqlFormat) || !is_array($sqlFormat) ) {
-                    $return = $wpdb->get_col("SELECT " . $col . " FROM " . $table_name . $sql);
-                } else {
-                    $return = $wpdb->get_col($wpdb->prepare("SELECT " . $col . " FROM " . $table_name . $sql, ...$sqlFormat));
+                if ( empty($whereValue) && empty($whereSQL) ) {
+                    $return = $wpdb->get_col("SELECT " . $col . " FROM " . $table_name );
+                }
+                if (!empty($whereValue) && !empty($whereSQL)) {
+                    $return = $wpdb->get_col($wpdb->prepare("SELECT " . $col . " FROM " . $table_name . $whereSQL, ...$whereValue));
                 }
 
                 // 失败
@@ -57,7 +58,7 @@ if ( !class_exists('LUWPDQL') ) {
                 return (new LUSend())->send_array(1, 'col 已查询到', $return);
             }
 
-            return (new LUSend())->send_array(0, 'col 表名不存在', '');
+            return (new LUSend())->send_array(0, 'col 未找到表 '.$table_name, '');
         }
 
         /**
@@ -68,16 +69,17 @@ if ( !class_exists('LUWPDQL') ) {
          * @param $sqlFormat            : 格式数组
          * @return array
          */
-        public function get_var( string $tableNameNoPrefix, string $col, string $sql, array $sqlFormat )
+        public function get_var( string $tableNameNoPrefix, string $col, string $whereSQL, array $whereValue ): array
         {
             global $wpdb;
             $table_name = $wpdb->prefix . $tableNameNoPrefix;
             if ( $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") == $table_name ) {
 
-                if ( empty($sqlFormat) || !is_array($sqlFormat) ) {
-                    $return = $wpdb->get_var("SELECT " . $col . " FROM " . $table_name . $sql);
-                } else {
-                    $return = $wpdb->get_var($wpdb->prepare("SELECT " . $col . " FROM " . $table_name . $sql, ...$sqlFormat));
+                if ( empty($whereValue) && empty($whereSQL) ) {
+                    $return = $wpdb->get_var("SELECT " . $col . " FROM " . $table_name );
+                }
+                if ( !empty($whereValue) && !empty($whereSQL) ) {
+                    $return = $wpdb->get_var($wpdb->prepare("SELECT " . $col . " FROM " . $table_name . $whereSQL, ...$whereValue));
                 }
 
                 // 失败
@@ -93,7 +95,7 @@ if ( !class_exists('LUWPDQL') ) {
                 return (new LUSend())->send_array(1, 'var 已查询到', $return);
             }
 
-            return (new LUSend())->send_array(0, 'var 表名不存在', '');
+            return (new LUSend())->send_array(0, 'var 未找到表 '.$table_name, '');
         }
 
         /**
@@ -105,16 +107,17 @@ if ( !class_exists('LUWPDQL') ) {
          * @param $output               : 返回格式
          * @return array
          */
-        public function get_row( string $tableNameNoPrefix, string $cols, string $sql, array $sqlFormat, string $output )
+        public function get_row( string $tableNameNoPrefix, string $cols, string $whereSQL, array $whereValue, string $output ): array
         {
             global $wpdb;
             $table_name = $wpdb->prefix . $tableNameNoPrefix;
             if ( $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") == $table_name ) {
 
-                if ( empty($sqlFormat) || !is_array($sqlFormat) ) {
-                    $return = $wpdb->get_row( "SELECT ".$cols." FROM " . $table_name . $sql, $output );
-                } else {
-                    $return = $wpdb->get_row( $wpdb->prepare("SELECT ".$cols." FROM " . $table_name . $sql, ...$sqlFormat), $output );
+                if ( empty($whereValue) && empty($whereSQL) ) {
+                    $return = $wpdb->get_row( "SELECT ".$cols." FROM " . $table_name, $output );
+                }
+                if ( !empty($whereValue) && !empty($whereSQL) ){
+                    $return = $wpdb->get_row( $wpdb->prepare("SELECT ".$cols." FROM " . $table_name . $whereSQL, ...$whereValue), $output );
                 }
 
                 // 查询失败
@@ -129,28 +132,29 @@ if ( !class_exists('LUWPDQL') ) {
                 return (new LUSend())->send_array(1, 'row 已查询到', $return);
             }
 
-            return (new LUSend())->send_array(0, 'row 表名不存在', '');
+            return (new LUSend())->send_array(0, 'row 未找到表 '.$table_name, '');
         }
 
         /**
          * 获取多行数据
          * @param $tableNameNoPrefix        : 没有前缀的表名
          * @param $cols                     : 特定列或全部
-         * @param $sql                      : SQL语句
-         * @param $sqlFormat                : 格式数组
+         * @param $whereSQL                      : SQL语句
+         * @param array $whereValue         : 格式数组
          * @param $output                   : 返回格式
          * @return array
          */
-        public function get_results( string $tableNameNoPrefix, string $cols, string $sql, array $sqlFormat, string $output )
+        public function get_results( string $tableNameNoPrefix, string $cols, string $whereSQL, array $whereValue, string $output ): array
         {
             global $wpdb;
             $table_name = $wpdb->prefix . $tableNameNoPrefix;
             if ( $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") == $table_name ) {
 
-                if ( empty($sqlFormat) || !is_array($sqlFormat) ) {
-                    $return = $wpdb->get_results( "SELECT " . $cols . " FROM " . $table_name . $sql, $output );
-                } else {
-                    $return = $wpdb->get_results($wpdb->prepare("SELECT " . $cols . " FROM " . $table_name . $sql, ...$sqlFormat), $output);
+                if ( empty($whereSQL) && empty($whereValue) ) {
+                    $return = $wpdb->get_results( "SELECT " . $cols . " FROM " . $table_name, $output );
+                }
+                if ( !empty($whereSQL) && !empty($whereValue) ) {
+                    $return = $wpdb->get_results($wpdb->prepare("SELECT " . $cols . " FROM " . $table_name . $whereSQL, ...$whereValue), $output);
                 }
 
                 // 查询失败
@@ -165,7 +169,7 @@ if ( !class_exists('LUWPDQL') ) {
                 return (new LUSend())->send_array(1, 'results 已查询到', $return);
             }
 
-            return (new LUSend())->send_array(0, 'results 表名不存在', '');
+            return (new LUSend())->send_array(0, 'results 未找到表 '.$table_name, '');
         }
 
         /**

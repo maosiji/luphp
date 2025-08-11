@@ -26,18 +26,18 @@ if ( !class_exists('LUWPDML') ) {
 
         /**
          * 添加表条目
-         * @param $tableNameNoPrefix        : 没有前缀的表名
-         * @param $params                   : 插入的数据
-         * @param $formats                  : 插入的数据占位符
+         * @param $tableNameNoPrefix       : 没有前缀的表名
+         * @param $param                   : 插入的数据
+         * @param $format                  : 插入的数据占位符
          * @return array
          */
-        public function insert( string $tableNameNoPrefix, array $params, array $formats )
+        public function insert( string $tableNameNoPrefix, array $param, array $format ): array
         {
             global $wpdb;
             $table_name = $wpdb->prefix . $tableNameNoPrefix;
             if ( $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") == $table_name ) {
                 // int|false 插入的行数（注意不是行号），如果出现错误则返回 false。
-                $return = $wpdb->insert( $table_name, $params, $formats );
+                $return = $wpdb->insert( $table_name, $param, $format );
 
                 if ( !empty($wpdb->last_error) ) {
                     return (new LUSend())->send_array(0, 'insert 插入失败', esc_html($wpdb->last_error));
@@ -47,11 +47,11 @@ if ( !class_exists('LUWPDML') ) {
                     return (new LUSend())->send_array(0, 'insert 插入失败2', $return );
                 }
 
-                $params['id'] = $wpdb->insert_id;
-                return (new LUSend())->send_array(1, 'insert 插入成功', $params);
+                $param['id'] = $wpdb->insert_id;
+                return (new LUSend())->send_array(1, 'insert 插入成功', $param);
             }
 
-            return (new LUSend())->send_array(0, 'insert 未找到表名', '');
+            return (new LUSend())->send_array(0, 'insert 未找到表 '.$table_name, '');
         }
 
         /**
@@ -114,14 +114,14 @@ if ( !class_exists('LUWPDML') ) {
          *  $wheres              array( 'no' => $no, 'status' => $status, )
          *  $wheresFormat        array('%s', '%d')
          */
-        public function update( string $tableNameNoPrefix, array $params, array $formats, array $wheres, array $wheresFormat )
+        public function update( string $tableNameNoPrefix, array $param, array $format, array $whereParam, array $wheresFormat ): array
         {
             global $wpdb;
             $table_name = $wpdb->prefix . $tableNameNoPrefix;
 
             if ( $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") == $table_name ) {
 
-                $update = $wpdb->update( $table_name, $params, $wheres, $formats, $wheresFormat );
+                $update = $wpdb->update( $table_name, $param, $whereParam, $format, $wheresFormat );
 
                 if ( !empty($wpdb->last_error) ) {
                     return (new LUSend())->send_array(0, 'update 更新失败', esc_html($wpdb->last_error) );
@@ -141,7 +141,7 @@ if ( !class_exists('LUWPDML') ) {
                 return (new LUSend())->send_array(1, 'update 更新成功', $update );
             }
 
-            return (new LUSend())->send_array(0, 'update 未找到表名', '' );
+            return (new LUSend())->send_array(0, 'update 未找到表 '.$table_name, '' );
         }
 
         /**
@@ -151,14 +151,14 @@ if ( !class_exists('LUWPDML') ) {
          * @param $wheresFormat             : Where条件数据数组对应的格式数组
          * @return array
          */
-        public function delete( string $tableNameNoPrefix, array $wheres, array $wheresFormat )
+        public function delete( string $tableNameNoPrefix, array $whereParam, array $wheresFormat ): array
         {
             global $wpdb;
             $table_name = $wpdb->prefix . $tableNameNoPrefix;
 
             if ( $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") == $table_name ) {
 
-                $update = $wpdb->delete( $table_name, $wheres, $wheresFormat );
+                $update = $wpdb->delete( $table_name, $whereParam, $wheresFormat );
 
                 if ( !empty($wpdb->last_error) ) {
                     return (new LUSend())->send_array(0, 'delete 删除失败', esc_html($wpdb->last_error) );
@@ -178,7 +178,7 @@ if ( !class_exists('LUWPDML') ) {
                 return (new LUSend())->send_array(1, 'delete 删除成功', $update );
             }
 
-            return (new LUSend())->send_array(0, 'delete 未找到表名', '' );
+            return (new LUSend())->send_array(0, 'delete 未找到表 '.$table_name, '' );
         }
 
         /**
@@ -186,14 +186,12 @@ if ( !class_exists('LUWPDML') ) {
          *
          * DELETE FROM my_custom_table WHERE id IN (%d,%d,%d)
          * @param string $tableNameNoPrefix
-         * @param string $whereMeta         :where条件，只能有一个。如 id
-         * @param string $whereCompare      :where条件的条件，这里默认 IN
-         * @param string $whereFormat       :where条件的格式
-         * @param array $metaValues         :条件的值数组
-         * @param bool $isTransaction       :是否开启事务
+         * @param string $whereSQL
+         * @param array $whereValue
+         * @param bool $isTransaction :是否开启事务
          * @return array
          */
-        public function deleteIn( string $tableNameNoPrefix, string $whereMeta, string $whereFormat, array $params, bool $isTransaction=false, string $whereCompare='IN' )
+        public function query_delete( string $tableNameNoPrefix, string $whereSQL, array $whereValue, bool $isTransaction=false ): array
         {
             global $wpdb;
             $table_name = $wpdb->prefix . $tableNameNoPrefix;
@@ -204,8 +202,8 @@ if ( !class_exists('LUWPDML') ) {
                 }
 
                 try {
-                    $sql = "DELETE FROM {$table_name} WHERE {$whereMeta} {$whereCompare} ({$whereFormat})";
-                    $deleted = $wpdb->query($wpdb->prepare($sql, $params));
+                    $sql = "DELETE FROM {$table_name} {$whereSQL}";
+                    $deleted = $wpdb->query($wpdb->prepare($sql, $whereValue));
 
                     if ( $deleted===false ) {
                         return (new LUSend())->send_array( 0, '删除失败' );
@@ -227,7 +225,7 @@ if ( !class_exists('LUWPDML') ) {
 
             }
 
-            return (new LUSend())->send_array(0, 'deleteIn 未找到表 '.$tableNameNoPrefix, '' );
+            return (new LUSend())->send_array(0, 'deleteIn 未找到表 '.$table_name, '' );
         }
 
     }

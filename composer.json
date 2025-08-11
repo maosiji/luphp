@@ -1,5 +1,7 @@
 {
     "name": "maosiji/luphp",
+    "description": "更快的做一些 PHP、WordPress 的开发",
+    "version": "0.1.50",
     "type": "library",
     "license": "MIT",
     "autoload": {
@@ -9,16 +11,25 @@
             "MAOSIJI\\LU\\WP\\SQL\\": "src/wordpress/sql"
         }
     },
+    "extra": {
+        "deprecated": {
+            "LUWPDBSQL": "将在 0.1.51 进行重大更新，用 LUWPDBSQL2 的内容替换 LUWPDBSQL 的内容，删除 LUWPDBSQL2"
+        }
+    },
     "authors": [
         {
-            "name": "maosiji"
+            "name": "maosiji",
+            "email": "1394846666@qq.com",
+            "homepage": "https://www.maosiji.com",
+            "role": "野生程序员"
         }
     ],
     "minimum-stability": "dev",
     "require": {
-      "ext-json": "*",
-      "ext-curl": "*",
-      "ext-ctype": "*",
-      "ext-openssl": "*"
+        "php": "^7.0",
+        "ext-json": "*",
+        "ext-curl": "*",
+        "ext-ctype": "*",
+        "ext-openssl": "*"
     }
 }
