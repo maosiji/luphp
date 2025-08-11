@@ -135,6 +135,19 @@ if ( !class_exists('LUWPDBSQL') ) {
             return $dml->delete( $this->tableName, $wheres, $wheresFormat );
         }
 
+        protected function deleteIn( string $whereMeta, array $wherePF, bool $isTransaction=false )
+        {
+            // 检测  输入是否正确
+            $param2 = $this->verify( 'param', $wherePF );
+            if ( $param2['code'] == 0 ) { return $param2; }
+
+            $whereFormat = explode( ',', $wherePF['format'] );
+            $params = $whereFormat['param'];
+
+            $dml = new LUWPDML();
+            return $dml->deleteIn( $this->tableName, $whereMeta, $whereFormat, $params, $isTransaction );
+        }
+
         /**
          * 更新1行
          * @param $params           : 更新的数据数组

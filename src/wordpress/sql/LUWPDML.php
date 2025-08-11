@@ -193,7 +193,7 @@ if ( !class_exists('LUWPDML') ) {
          * @param bool $isTransaction       :是否开启事务
          * @return array
          */
-        public function deleteIn( string $tableNameNoPrefix, string $whereMeta, string $whereFormat, array $metaValues, string $whereCompare='IN', bool $isTransaction=false )
+        public function deleteIn( string $tableNameNoPrefix, string $whereMeta, string $whereFormat, array $params, bool $isTransaction=false, string $whereCompare='IN' )
         {
             global $wpdb;
             $table_name = $wpdb->prefix . $tableNameNoPrefix;
@@ -205,7 +205,7 @@ if ( !class_exists('LUWPDML') ) {
 
                 try {
                     $sql = "DELETE FROM {$table_name} WHERE {$whereMeta} {$whereCompare} ($whereFormat)";
-                    $deleted = $wpdb->query($wpdb->prepare($sql, $metaValues));
+                    $deleted = $wpdb->query($wpdb->prepare($sql, $params));
 
                     if ( $deleted===false ) {
                         return (new LUSend())->send_array( 0, '删除失败' );
