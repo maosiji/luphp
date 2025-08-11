@@ -68,16 +68,16 @@ if ( !class_exists('LUWPDQL') ) {
          * @param $sqlFormat            : 格式数组
          * @return array
          */
-        public function get_var( string $tableNameNoPrefix, string $colSql, string $sql, array $sqlFormat )
+        public function get_var( string $tableNameNoPrefix, string $col, string $sql, array $sqlFormat )
         {
             global $wpdb;
             $table_name = $wpdb->prefix . $tableNameNoPrefix;
             if ( $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") == $table_name ) {
 
                 if ( empty($sqlFormat) || !is_array($sqlFormat) ) {
-                    $return = $wpdb->get_var("SELECT " . $colSql . " FROM " . $table_name . $sql);
+                    $return = $wpdb->get_var("SELECT " . $col . " FROM " . $table_name . $sql);
                 } else {
-                    $return = $wpdb->get_var($wpdb->prepare("SELECT " . $colSql . " FROM " . $table_name . $sql, ...$sqlFormat));
+                    $return = $wpdb->get_var($wpdb->prepare("SELECT " . $col . " FROM " . $table_name . $sql, ...$sqlFormat));
                 }
 
                 // 失败

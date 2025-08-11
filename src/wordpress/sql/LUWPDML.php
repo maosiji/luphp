@@ -145,7 +145,7 @@ if ( !class_exists('LUWPDML') ) {
         }
 
         /**
-         * 删除条目
+         * 删除1个或多个条目。删除多个条目时，根据每个条目的共同点来删除
          * @param $tableNameNoPrefix        : 没有前缀的表名
          * @param $wheres                   : Where条件数据数组
          * @param $wheresFormat             : Where条件数据数组对应的格式数组
@@ -181,6 +181,54 @@ if ( !class_exists('LUWPDML') ) {
             return (new LUSend())->send_array(0, 'delete 未找到表名', '' );
         }
 
+        /**
+         * （支持事务）删除1个或多个条目，删除多个条目时，相互之间没有共同点，比如按id删除。
+         *
+         * DELETE FROM my_custom_table WHERE id IN (%d,%d,%d)
+         * @param string $tableNameNoPrefix
+         * @param string $whereMeta         :where条件，只能有一个。如 id
+         * @param string $whereCompare      :where条件的条件，这里默认 IN
+         * @param string $whereFormat       :where条件的格式
+         * @param array $metaValues         :条件的值数组
+         * @param bool $isTransaction       :是否开启事务
+         * @return array
+         */
+        public function deleteIn( string $tableNameNoPrefix, string $whereMeta, string $whereFormat, array $metaValues, string $whereCompare='IN', bool $isTransaction=false )
+        {
+            global $wpdb;
+            $table_name = $wpdb->prefix . $tableNameNoPrefix;
+            if ( $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") == $table_name ) {
+
+                if ( $isTransaction===true ) {
+                    $wpdb->query('START TRANSACTION');
+                }
+
+                try {
+                    $sql = "DELETE FROM {$table_name} WHERE {$whereMeta} {$whereCompare} ($whereFormat)";
+                    $deleted = $wpdb->query($wpdb->prepare($sql, $metaValues));
+
+                    if ( $deleted===false ) {
+                        return (new LUSend())->send_array( 0, '删除失败' );
+                    }
+
+                    if ( $isTransaction===true ) {
+                        $wpdb->query('COMMIT');
+                    }
+
+                    return (new LUSend())->send_array( 1, '删除成功', $deleted );
+                }
+                catch (\Exception $e) {
+                    if ( $isTransaction===true ) {
+                        $wpdb->query('ROLLBACK');
+                    }
+
+                    return (new LUSend())->send_array( 0, '执行失败', $e->getMessage() );
+                }
+
+            }
+
+            return (new LUSend())->send_array(0, 'deleteIn 未找到表 '.$tableNameNoPrefix, '' );
+        }
 
     }
 }
