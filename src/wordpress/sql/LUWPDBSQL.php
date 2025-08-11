@@ -141,8 +141,8 @@ if ( !class_exists('LUWPDBSQL') ) {
             $param2 = $this->verify( 'param', $wherePF );
             if ( $param2['code'] == 0 ) { return $param2; }
 
-            $whereFormat = explode( ',', $wherePF['format'] );
-            $params = $whereFormat['param'];
+            $whereFormat = implode( ',', $wherePF['format'] );
+            $params = $wherePF['param'];
 
             $dml = new LUWPDML();
             return $dml->deleteIn( $this->tableName, $whereMeta, $whereFormat, $params, $isTransaction );
