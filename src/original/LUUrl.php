@@ -26,8 +26,8 @@ if ( !class_exists( 'LUUrl' ) ) {
          */
         public function get_host( string $url=null ): string
         {
-            if ( $url===null ) {
-                $host = parse_url( $url, PHP_URL_HOST )
+            if ( $url!==null ) {
+                $host = parse_url( $url, PHP_URL_HOST );
             } else {
                 $host = $_SERVER['HTTP_HOST'];
             }
