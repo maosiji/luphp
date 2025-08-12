@@ -1,7 +1,7 @@
 {
     "name": "maosiji/luphp",
     "description": "更快的做一些 PHP、WordPress 的开发",
-    "version": "0.1.50",
+    "version": "0.1.51",
     "type": "library",
     "license": "MIT",
     "autoload": {
