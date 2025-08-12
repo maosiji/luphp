@@ -13,7 +13,6 @@
     },
     "extra": {
         "deprecated": {
-            "LUWPDBSQL": "将在 0.1.51 进行重大更新，用 LUWPDBSQL2 的内容替换 LUWPDBSQL 的内容，删除 LUWPDBSQL2"
         }
     },
     "authors": [
