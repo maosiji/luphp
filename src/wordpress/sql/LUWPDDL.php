@@ -18,6 +18,7 @@
     COMMENT：用于向数据字典添加注释。
     RENAME：用于重命名一个对象。
  * */
+
 namespace MAOSIJI\LU\WP\SQL;
 use MAOSIJI\LU\LUSend;
 

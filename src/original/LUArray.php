@@ -8,15 +8,14 @@
  * update               : 
  * project              : luphp
  */
+
 namespace MAOSIJI\LU;
 if ( !class_exists('LUArray') ) {
     class LUArray
     {
-
         public function __construct()
         {
         }
-
 
         /**
          * 限制数组最多保留指定数量的元素，超出部分根据 limit 正负值方向截取，并控制是否保留原始键名

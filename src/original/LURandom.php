@@ -1,6 +1,4 @@
 <?php
-namespace MAOSIJI\LU;
-
 /*
  * author               : 猫斯基
  * url                  : maosiji.com
@@ -11,6 +9,7 @@ namespace MAOSIJI\LU;
  * project              : luphp
  */
 
+namespace MAOSIJI\LU;
 if (!class_exists('LURandom')) {
     class LURandom
     {
@@ -85,6 +84,72 @@ if (!class_exists('LURandom')) {
         }
 
         /**
+         * 生成随机字符串（包含大小写）
+         * @param int $length
+         * @param bool $is_include_number :是否包含数字
+         * @return string
+         */
+        public function rand_str( int $length=8, bool $is_include_number=true )
+        {
+            $type = array('type'=>['lowercase', 'uppercase']);
+
+            if ( $is_include_number ) {
+                $type = array('type'=>['lowercase', 'uppercase', 'number']);
+            }
+
+            switch (mt_rand(0, 1)) {
+                case 0 :
+                    return $this->rand_str_by_strshuffle( $length, $type );
+                case 1:
+                    return $this->rand_str_by_shuffle( $length, $type );
+            }
+        }
+
+        /**
+         * 生成随机小写字符串
+         * @param int $length
+         * @param bool $is_include_number :是否包含数字
+         * @return string
+         */
+        public function rand_lower_str( int $length=8, bool $is_include_number=true )
+        {
+            $type = array('type'=>['lowercase']);
+
+            if ( $is_include_number ) {
+                $type = array('type'=>['lowercase', 'number']);
+            }
+
+            switch (mt_rand(0, 1)) {
+                case 0 :
+                    return $this->rand_str_by_strshuffle( $length, $type );
+                case 1:
+                    return $this->rand_str_by_shuffle( $length, $type );
+            }
+        }
+
+        /**
+         * 生成随机大写字符串
+         * @param int $length
+         * @param bool $is_include_number :是否包含数字
+         * @return string
+         */
+        public function rand_upper_str( int $length=8, bool $is_include_number=true )
+        {
+            $type = array('type'=>['uppercase']);
+
+            if ( $is_include_number ) {
+                $type = array('type'=>['uppercase', 'number']);
+            }
+
+            switch (mt_rand(0, 1)) {
+                case 0 :
+                    return $this->rand_str_by_strshuffle( $length, $type );
+                case 1:
+                    return $this->rand_str_by_shuffle( $length, $type );
+            }
+        }
+
+        /**
          * 使用 mt_rand 生成指定长度的随机整数，首位永远不会是 0
          *
          * @param int $length 长度
@@ -104,7 +169,7 @@ if (!class_exists('LURandom')) {
          *                      - type: 字符类型数组
          *                      - is_first_not: 首位不能包含的字符
          *                      - custom: 自定义字符
-         *                      - custom_type: 自定义字符的添加方式 ('add', 'override')
+         *                      - custom_type: 自定义字符的添加方式 ('before' 前面添加, 'after' 后面添加, 'override' 覆盖)
          *
          * @return string 指定长度的随机字符串
          */
@@ -135,7 +200,7 @@ if (!class_exists('LURandom')) {
          *                      - type: 字符类型数组
          *                      - is_first_not: 首位不能包含的字符
          *                      - custom: 自定义字符
-         *                      - custom_type: 自定义字符的添加方式 ('add', 'override')
+         *                      - custom_type: 自定义字符的添加方式 ('before' 前面添加, 'after' 后面添加, 'override' 覆盖)
          *
          * @return string 指定长度的随机字符串
          */
@@ -185,11 +250,15 @@ if (!class_exists('LURandom')) {
             }
 
             if (!empty($params['custom'])) {
-                if ($params['custom_type'] === 'add') {
+
+                if ($params['custom_type'] === 'after') {
                     $char_pool .= $params['custom'];
-                } elseif ($params['custom_type'] === 'override') {
-                    $char_pool = $params['custom'];
                 }
+                if ($params['custom_type'] === 'before') {
+                    $char_pool = $params['custom'].$char_pool;
+                }
+
+                $char_pool = $params['custom'];
             }
 
             return $char_pool;

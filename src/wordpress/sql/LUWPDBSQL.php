@@ -487,6 +487,11 @@ if ( !class_exists('LUWPDBSQL') ) {
             return $dql->get_results( $this->tableName, $cols, $sql, $whereValue, $output );
         }
 
+
+
+
+
+
         /**
          * 根据编号查询是否有记录，在主表中为每条的编号，在meta表中为主表的编号
          * @param $no : 编号
@@ -510,7 +515,7 @@ if ( !class_exists('LUWPDBSQL') ) {
                 )
             );
 
-            return $this->get_row($where);
+            return $this->get_row( 'no', $where );
         }
 
         /**
@@ -519,8 +524,11 @@ if ( !class_exists('LUWPDBSQL') ) {
          */
         protected function get_total_num()
         {
-            return $this->get_var( array() );
+            return $this->get_var();
         }
+
+     
+
 
 
 
