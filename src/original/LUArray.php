@@ -25,7 +25,7 @@ if ( !class_exists('LUArray') ) {
          * @param bool $preserve_keys 是否保留原始键名，默认为 false（即重置索引）
          * @return array
          */
-        function slice(array $array, int $limit = -10, bool $preserve_keys = false): array
+        public function slice( array $array, int $limit = -10, bool $preserve_keys = false ): array
         {
             $count = count($array);
             $absLimit = abs($limit);
@@ -43,7 +43,55 @@ if ( !class_exists('LUArray') ) {
             return $preserve_keys ? $result : array_values($result);
         }
 
+        /**
+         * 数组的value是否包含某个值
+         * @param array $array      :数组
+         * @param $needle           :值
+         * @param bool $is_strict   :模式，默认 false，都转为字符串比较，宽松模式。true，严格模式。
+         * @return bool
+         */
+        public function is_contain( array $array, $needle, bool $is_strict=false ): bool
+        {
+            foreach ($array as $value) {
+                if ( $is_strict ) {
+                    if ( strpos($value, $needle) !== false ) {
+                        return true;
+                    }
+                }
+                else {
+                    if (is_scalar($value) && strpos((string)$value, (string)$needle) !== false) {
+                        return true;
+                    }
+                }
+            }
 
+            return false;
+        }
+
+        /**
+         * 数组的value是否与某个值相等
+         * @param array $array      :数组
+         * @param $needle           :值
+         * @param bool $is_strict   :模式，默认 false，都转为字符串比较，宽松模式。true，用===比较，严格模式。
+         * @return bool
+         */
+        public function is_equal( array $array, $needle, bool $is_strict=false ): bool
+        {
+            foreach ($array as $value) {
+                if ( $is_strict ) {
+                    if ( $value==$needle ) {
+                        return true;
+                    }
+                }
+                else {
+                    if ( $value===$needle ) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
 
 
 
