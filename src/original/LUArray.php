@@ -68,30 +68,6 @@ if ( !class_exists('LUArray') ) {
             return false;
         }
 
-        /**
-         * 数组的value是否与某个值相等
-         * @param array $array      :数组
-         * @param $needle           :值
-         * @param bool $is_strict   :模式，默认 false，都转为字符串比较，宽松模式。true，用===比较，严格模式。
-         * @return bool
-         */
-        public function is_equal( array $array, $needle, bool $is_strict=false ): bool
-        {
-            foreach ($array as $value) {
-                if ( $is_strict ) {
-                    if ( $value==$needle ) {
-                        return true;
-                    }
-                }
-                else {
-                    if ( $value===$needle ) {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        }
 
 
 
