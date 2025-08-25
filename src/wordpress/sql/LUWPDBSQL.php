@@ -174,7 +174,7 @@ if ( !class_exists('LUWPDBSQL') ) {
          * @param array $whereCompare
          * @return array
          */
-        protected function get_var( string $col='id', string $juhe='COUNT', array $whereParam=[], array $whereCompare=[], array $whereFormat=[], $isCache=false ): array
+        protected function get_var( string $col='id', string $juhe='COUNT', array $whereParam=[], array $whereCompare=[], array $whereFormat=[], bool $isCache=false ): array
         {
             // 如果用缓存，则先查看缓存里的
             if ( $isCache ) {
@@ -268,7 +268,7 @@ if ( !class_exists('LUWPDBSQL') ) {
          *      )
          * )
          */
-        protected function get_row( string $cols='*', array $whereParam=[], array $whereCompare=[], array $whereFormat=[], string $output='ARRAY_A', array $orderSort=array('orderby'=>'id', 'sort'=>'DESC'), $isCache=false ): array
+        protected function get_row( string $cols='*', array $whereParam=[], array $whereCompare=[], array $whereFormat=[], bool $isCache=false, string $output='ARRAY_A', array $orderSort=array('orderby'=>'id', 'sort'=>'DESC') ): array
         {
             // 如果用缓存，则先查看缓存里的
             if ( $isCache ) {
@@ -345,12 +345,13 @@ if ( !class_exists('LUWPDBSQL') ) {
          * @param $orderSort            : (array) 排序（如 ORDER BY id DESC ），必须包含元素 array('orderby'=>'id', 'sort'=>'DESC')
          *                                          orderby : string 字段名
          *                                          sort : 排序方式 ASC 正序 DESC 倒序
+         * @param bool $isCache         : 是否缓存，默认 false。
          * @param $limit                : (int) 查询数量，不可使用 OFFSET 属性，如要分页可根据上一次查询的id来操作。默认 0，即无限制
          * @param $col                  : (string) 选择特定列或所有列，默认 *，全部显示。若写多个，如：id,name,age
          * @param $output               : (string) OBJECT（对象）、ARRAY_A（关联数组）、ARRAY_N（数值数组）。默认 ARRAY_A。
          * @return array
          */
-        protected function get_results( string $cols='*', array $whereParam=[], array $whereCompare=[], array $whereFormat=[], int $limit=0, string $output='ARRAY_A', array $orderSort=array('orderby'=>'id', 'sort'=>'DESC'), $isCache=false ): array
+        protected function get_results( string $cols='*', array $whereParam=[], array $whereCompare=[], array $whereFormat=[], bool $isCache=false, int $limit=0, string $output='ARRAY_A', array $orderSort=array('orderby'=>'id', 'sort'=>'DESC') ): array
         {
             // 如果用缓存，则先查看缓存里的
             if ( $isCache ) {
