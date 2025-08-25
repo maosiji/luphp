@@ -24,6 +24,8 @@ if ( !class_exists('LUWPDBSQL') ) {
     abstract class LUWPDBSQL {
         protected $tableName;
         private static $instances = [];
+        // 当前页面查询缓存，在一个页面里相同的查询条目只用查询一次即可，第2次直接返回缓存里的。
+        private static $query_cache = [];
         private function __construct( string $tableName )
         {
             $this->tableName = $tableName;
@@ -46,6 +48,10 @@ if ( !class_exists('LUWPDBSQL') ) {
         private function __clone()
         {
         }
+
+        /**************************************************
+         * 数据表操作
+         **************************************************/
 
         /**
          * 创建数据表结构
@@ -80,127 +86,9 @@ if ( !class_exists('LUWPDBSQL') ) {
 
         }
 
-        /**
-         * 插入1行
-         * @param $param   : 插入的数据数组
-         * @param $format  : 插入的数据数组对应的格式数组
-         * @return array
-         */
-        protected function insert( array $param, array $format ): array
-        {
-            // 检测  输入是否正确
-            $paramVerify = $this->verify('param', array('param'=>$param, 'format'=>$format));
-            if ( $paramVerify['code'] == 0 ) { return $paramVerify; }
-
-            $dml = new LUWPDML();
-            return $dml->insert( $this->tableName, $param, $format );
-        }
-
-        /**
-         * 插入多行【未测试】
-         * @param array $data           :要插入的数据（二维数组）
-         * @param array $columns        :列名数组
-         * @param array $formats        :数据格式（如 '%s', '%d'）数组
-         * @return array
-         */
-        private function batchInsert( array $data, array $columns, array $formats ): array
-        {
-            $format = [];
-            $insert_data = [];
-
-            foreach ($data as $row) {
-                // 生成占位符并展平数据
-                $format[] = '(' . implode(', ', $formats) . ')';
-                $insert_data = array_merge($insert_data, array_values($row));
-            }
-
-            // 构建 SQL 查询
-            $columnSQL    = '`' . implode('`, `', $columns) . '`'; // 列名
-            $formatSQL  = implode(', ', $format);
-
-//            return array('code'=>0, 'msg'=>$formatSQL, 'data'=>$columnSQL, 'd'=>$insert_data);
-
-            $dml = new LUWPDML();
-            return $dml->batchInsert( $this->tableName, $insert_data, $columnSQL, $formatSQL );
-        }
-
-        /**
-         * 删除符合条件的行
-         * @param array $whereParam
-         * @param array $wheresFormat
-         * @return array
-         */
-        protected function delete( array $whereParam, array $wheresFormat ): array
-        {
-            // 检测  输入是否正确
-            $paramVerify = $this->verify('param', array('param'=>$whereParam, 'format'=>$wheresFormat));
-            if ( $paramVerify['code'] == 0 ) { return $paramVerify; }
-
-            $dml = new LUWPDML();
-            return $dml->delete( $this->tableName, $whereParam, $wheresFormat );
-        }
-
-        /**
-         * （支持事务）删除1个或多个条目，删除多个条目时，相互之间没有共同点，比如按id删除。
-         *
-         * DELETE FROM my_custom_table WHERE id IN (%d,%d,%d)
-         *
-         * @param string $col :where条件，列的名称，只能有一个。如 id
-         * @param string $whereCompare :where条件的条件，> < = IN LIKE
-         * @param string $whereFormat :where条件的格式
-         * @param array $whereValue :条件的值的数组
-         * @param bool $isDeleteAll :当 $whereCompare、$whereFormat、$whereValue 都为 0 时，则会删除全部行。为了防止误删，则此参数必须为 true 时才可以删除全部。
-         * @param bool $isTransaction :是否开启事务
-         * @return array
-         */
-        protected function query_delete( string $col, string $whereCompare, string $whereFormat, array $whereValue, bool $isDeleteAll=false, bool $isTransaction=false ): array
-        {
-            // 检测  输入是否正确
-            $colVerify = $this->verify( 'col', $col );
-            if ( $colVerify['code'] == 0 ) { return $colVerify; }
-
-            $whereSQL = " WHERE {$col} {$whereCompare} ({$whereFormat})";
-
-            if ( empty($whereCompare) && empty($whereFormat) && empty($whereValue) && !is_array($whereValue) ) {
-
-                if ( !$isDeleteAll ) {
-                    return (new LUSend())->send_array( 0, '若想删除该表里的所有行，则参数 isDeleteAll 必须为 true' );
-                }
-
-                $whereSQL = "";
-            }
-
-            $dml = new LUWPDML();
-            return $dml->query_delete( $this->tableName, $whereSQL, $whereValue, $isTransaction );
-        }
-
-        /**
-         * 更新1行
-         * @param array $param           : 更新的数据数组
-         * @param array $format          : 更新的数据数组对应的格式数组
-         * @param array $whereParam      : Where条件数据数组
-         * @param array $wheresFormat    : Where条件数据数组对应的格式数组
-         *
-         * $params              array('no' => $no,'status' => $status,)
-         * $formats             array('%s', '%d')
-         * $wheres              array( 'no' => $no, 'status' => $status, )
-         * $wheresFormat        array('%s', '%d')
-         *
-         * @return array
-         */
-        protected function update( array $param, array $format, array $whereParam, array $wheresFormat ): array
-        {
-            // 检测  输入是否正确
-            $param1 = $this->verify('param', array('param'=>$param, 'format'=>$format));
-            if ( $param1['code'] == 0 ) { return $param1; }
-
-            // 检测  输入是否正确
-            $param2 = $this->verify('param', array('param'=>$whereParam, 'format'=>$wheresFormat));
-            if ( $param2['code'] == 0 ) { return $param2; }
-
-            $dml = new LUWPDML();
-            return $dml->update( $this->tableName, $param, $format, $whereParam, $wheresFormat );
-        }
+        /**************************************************
+         * 数据表查询
+         **************************************************/
 
         /**
          * 查询1列
@@ -211,8 +99,16 @@ if ( !class_exists('LUWPDBSQL') ) {
          * @param array $whereFormat
          * @return array
          */
-        protected function get_col( string $col='id', array $whereParam=[], array $whereCompare=[], array $whereFormat=[] ): array
+        protected function get_col( string $col='id', array $whereParam=[], array $whereCompare=[], array $whereFormat=[], bool $isCache=false ): array
         {
+            // 如果用缓存，则先查看缓存里的
+            if ( $isCache ) {
+                $cache_key = $this->generate_cache_key( __FUNCTION__, func_get_args() );
+                if ( isset( self::$query_cache[ $cache_key ] ) ) {
+                    return self::$query_cache[ $cache_key ];
+                }
+            }
+
             // 检测 col 输入是否正确
             $colVerify = $this->verify('cols', $col);
             if ( $colVerify['code'] == 0 ) { return $colVerify; }
@@ -251,7 +147,13 @@ if ( !class_exists('LUWPDBSQL') ) {
             }
 
             $dql = new LUWPDQL();
-            return $dql->get_col( $this->tableName, $col, $whereSQL, $whereValue );
+            $result = $dql->get_col( $this->tableName, $col, $whereSQL, $whereValue );
+
+            if ( $isCache ) {
+                self::$query_cache[ $cache_key ] = $result;
+            }
+
+            return $result;
         }
 
         /**
@@ -272,8 +174,16 @@ if ( !class_exists('LUWPDBSQL') ) {
          * @param array $whereCompare
          * @return array
          */
-        protected function get_var( string $col='id', string $juhe='COUNT', array $whereParam=[], array $whereCompare=[], array $whereFormat=[] ): array
+        protected function get_var( string $col='id', string $juhe='COUNT', array $whereParam=[], array $whereCompare=[], array $whereFormat=[], $isCache=false ): array
         {
+            // 如果用缓存，则先查看缓存里的
+            if ( $isCache ) {
+                $cache_key = $this->generate_cache_key( __FUNCTION__, func_get_args() );
+                if ( isset( self::$query_cache[ $cache_key ] ) ) {
+                    return self::$query_cache[ $cache_key ];
+                }
+            }
+
             // 检测 col 输入是否正确
             $colVerify = $this->verify('cols', $col);
             if ( $colVerify['code'] == 0 ) { return $colVerify; }
@@ -317,7 +227,13 @@ if ( !class_exists('LUWPDBSQL') ) {
             $jhCol = ' '.$juhe.'('.$col.') ';
 
             $dql = new LUWPDQL();
-            return $dql->get_var( $this->tableName, $jhCol, $whereSQL, $whereValue );
+            $result = $dql->get_var( $this->tableName, $jhCol, $whereSQL, $whereValue );
+
+            if ( $isCache ) {
+                self::$query_cache[ $cache_key ] = $result;
+            }
+
+            return $result;
         }
 
         /**
@@ -352,8 +268,16 @@ if ( !class_exists('LUWPDBSQL') ) {
          *      )
          * )
          */
-        protected function get_row( string $cols='*', array $whereParam=[], array $whereCompare=[], array $whereFormat=[], string $output='ARRAY_A', array $orderSort=array('orderby'=>'id', 'sort'=>'DESC') ): array
+        protected function get_row( string $cols='*', array $whereParam=[], array $whereCompare=[], array $whereFormat=[], string $output='ARRAY_A', array $orderSort=array('orderby'=>'id', 'sort'=>'DESC'), $isCache=false ): array
         {
+            // 如果用缓存，则先查看缓存里的
+            if ( $isCache ) {
+                $cache_key = $this->generate_cache_key( __FUNCTION__, func_get_args() );
+                if ( isset( self::$query_cache[ $cache_key ] ) ) {
+                    return self::$query_cache[ $cache_key ];
+                }
+            }
+
             // 检测 ordersort 输入是否正确
             $orderSortVerify = $this->verify('ordersort', $orderSort);
             if ( $orderSortVerify['code'] == 0 ) { return $orderSortVerify; }
@@ -403,7 +327,13 @@ if ( !class_exists('LUWPDBSQL') ) {
             $sql = $whereSQL.$orderSortSQL;
 
             $dql = new LUWPDQL();
-            return $dql->get_row( $this->tableName, $cols, $sql, $whereValue, $output );
+            $result = $dql->get_row( $this->tableName, $cols, $sql, $whereValue, $output );
+
+            if ( $isCache ) {
+                self::$query_cache[ $cache_key ] = $result;
+            }
+
+            return $result;
         }
 
         /**
@@ -420,8 +350,16 @@ if ( !class_exists('LUWPDBSQL') ) {
          * @param $output               : (string) OBJECT（对象）、ARRAY_A（关联数组）、ARRAY_N（数值数组）。默认 ARRAY_A。
          * @return array
          */
-        protected function get_results( string $cols='*', array $whereParam=[], array $whereCompare=[], array $whereFormat=[], int $limit=0, string $output='ARRAY_A', array $orderSort=array('orderby'=>'id', 'sort'=>'DESC') ): array
+        protected function get_results( string $cols='*', array $whereParam=[], array $whereCompare=[], array $whereFormat=[], int $limit=0, string $output='ARRAY_A', array $orderSort=array('orderby'=>'id', 'sort'=>'DESC'), $isCache=false ): array
         {
+            // 如果用缓存，则先查看缓存里的
+            if ( $isCache ) {
+                $cache_key = $this->generate_cache_key( __FUNCTION__, func_get_args() );
+                if ( isset( self::$query_cache[ $cache_key ] ) ) {
+                    return self::$query_cache[ $cache_key ];
+                }
+            }
+
             // 检测 ordersort 输入是否正确
             $orderSortVerify = $this->verify('ordersort', $orderSort);
             if ( $orderSortVerify['code'] == 0 ) { return $orderSortVerify; }
@@ -484,13 +422,152 @@ if ( !class_exists('LUWPDBSQL') ) {
 //            return array('code'=>0, 'msg'=>'测试', 'data2'=>$sql, 'data3'=>$orderSort);
 
             $dql = new LUWPDQL();
-            return $dql->get_results( $this->tableName, $cols, $sql, $whereValue, $output );
+            $result = $dql->get_results( $this->tableName, $cols, $sql, $whereValue, $output );
+
+            if ( $isCache ) {
+                self::$query_cache[ $cache_key ] = $result;
+            }
+
+            return $result;
         }
 
+        /**************************************************
+         * 数据表插入
+         **************************************************/
 
+        /**
+         * 插入1行
+         * @param $param   : 插入的数据数组
+         * @param $format  : 插入的数据数组对应的格式数组
+         * @return array
+         */
+        protected function insert( array $param, array $format ): array
+        {
+            // 检测  输入是否正确
+            $paramVerify = $this->verify('param', array('param'=>$param, 'format'=>$format));
+            if ( $paramVerify['code'] == 0 ) { return $paramVerify; }
 
+            $dml = new LUWPDML();
+            return $dml->insert( $this->tableName, $param, $format );
+        }
 
+        /**
+         * 插入多行【未测试】
+         * @param array $data           :要插入的数据（二维数组）
+         * @param array $columns        :列名数组
+         * @param array $formats        :数据格式（如 '%s', '%d'）数组
+         * @return array
+         */
+        private function batchInsert( array $data, array $columns, array $formats ): array
+        {
+            $format = [];
+            $insert_data = [];
 
+            foreach ($data as $row) {
+                // 生成占位符并展平数据
+                $format[] = '(' . implode(', ', $formats) . ')';
+                $insert_data = array_merge($insert_data, array_values($row));
+            }
+
+            // 构建 SQL 查询
+            $columnSQL    = '`' . implode('`, `', $columns) . '`'; // 列名
+            $formatSQL  = implode(', ', $format);
+
+//            return array('code'=>0, 'msg'=>$formatSQL, 'data'=>$columnSQL, 'd'=>$insert_data);
+
+            $dml = new LUWPDML();
+            return $dml->batchInsert( $this->tableName, $insert_data, $columnSQL, $formatSQL );
+        }
+
+        /**************************************************
+         * 数据表更新
+         **************************************************/
+
+        /**
+         * 更新1行
+         * @param array $param           : 更新的数据数组
+         * @param array $format          : 更新的数据数组对应的格式数组
+         * @param array $whereParam      : Where条件数据数组
+         * @param array $wheresFormat    : Where条件数据数组对应的格式数组
+         *
+         * $params              array('no' => $no,'status' => $status,)
+         * $formats             array('%s', '%d')
+         * $wheres              array( 'no' => $no, 'status' => $status, )
+         * $wheresFormat        array('%s', '%d')
+         *
+         * @return array
+         */
+        protected function update( array $param, array $format, array $whereParam, array $wheresFormat ): array
+        {
+            // 检测  输入是否正确
+            $param1 = $this->verify('param', array('param'=>$param, 'format'=>$format));
+            if ( $param1['code'] == 0 ) { return $param1; }
+
+            // 检测  输入是否正确
+            $param2 = $this->verify('param', array('param'=>$whereParam, 'format'=>$wheresFormat));
+            if ( $param2['code'] == 0 ) { return $param2; }
+
+            $dml = new LUWPDML();
+            return $dml->update( $this->tableName, $param, $format, $whereParam, $wheresFormat );
+        }
+
+        /**************************************************
+         * 数据表删除
+         **************************************************/
+
+        /**
+         * 删除符合条件的行
+         * @param array $whereParam
+         * @param array $wheresFormat
+         * @return array
+         */
+        protected function delete( array $whereParam, array $wheresFormat ): array
+        {
+            // 检测  输入是否正确
+            $paramVerify = $this->verify('param', array('param'=>$whereParam, 'format'=>$wheresFormat));
+            if ( $paramVerify['code'] == 0 ) { return $paramVerify; }
+
+            $dml = new LUWPDML();
+            return $dml->delete( $this->tableName, $whereParam, $wheresFormat );
+        }
+
+        /**
+         * （支持事务）删除1个或多个条目，删除多个条目时，相互之间没有共同点，比如按id删除。
+         *
+         * DELETE FROM my_custom_table WHERE id IN (%d,%d,%d)
+         *
+         * @param string $col :where条件，列的名称，只能有一个。如 id
+         * @param string $whereCompare :where条件的条件，> < = IN LIKE
+         * @param string $whereFormat :where条件的格式
+         * @param array $whereValue :条件的值的数组
+         * @param bool $isDeleteAll :当 $whereCompare、$whereFormat、$whereValue 都为 0 时，则会删除全部行。为了防止误删，则此参数必须为 true 时才可以删除全部。
+         * @param bool $isTransaction :是否开启事务
+         * @return array
+         */
+        protected function query_delete( string $col, string $whereCompare, string $whereFormat, array $whereValue, bool $isDeleteAll=false, bool $isTransaction=false ): array
+        {
+            // 检测  输入是否正确
+            $colVerify = $this->verify( 'col', $col );
+            if ( $colVerify['code'] == 0 ) { return $colVerify; }
+
+            $whereSQL = " WHERE {$col} {$whereCompare} ({$whereFormat})";
+
+            if ( empty($whereCompare) && empty($whereFormat) && empty($whereValue) && !is_array($whereValue) ) {
+
+                if ( !$isDeleteAll ) {
+                    return (new LUSend())->send_array( 0, '若想删除该表里的所有行，则参数 isDeleteAll 必须为 true' );
+                }
+
+                $whereSQL = "";
+            }
+
+            $dml = new LUWPDML();
+            return $dml->query_delete( $this->tableName, $whereSQL, $whereValue, $isTransaction );
+        }
+
+        /**************************************************
+         * 自定义
+         **************************************************/
 
         /**
          * 根据编号查询是否有记录，在主表中为每条的编号，在meta表中为主表的编号
@@ -527,10 +604,12 @@ if ( !class_exists('LUWPDBSQL') ) {
             return $this->get_var();
         }
 
-     
 
 
 
+        /**************************************************
+         * 公共方法
+         **************************************************/
 
         /**
          * 数据验证
@@ -647,6 +726,27 @@ if ( !class_exists('LUWPDBSQL') ) {
 
             return array('code'=>1, 'msg'=>'检测通过', 'data'=>$args);
         }
+
+        /**
+         * 生成缓存 key
+         */
+        private function generate_cache_key( string $method, array $args ): string
+        {
+            // 移除最后一个参数（$nocache），避免影响 key
+            $args_for_key = $args;
+            array_pop($args_for_key); // 删除 $nocache
+
+            return md5(
+                get_called_class() . // 子类名
+                $this->tableName .         // 表名
+                $method .                  // 方法名（get_row / get_col / get_var）
+                serialize($args_for_key)   // 参数（不含 $nocache）
+            );
+        }
+
+
+
+
     }
 
 }
