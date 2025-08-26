@@ -17,6 +17,7 @@
  */
 
 namespace MAOSIJI\LU\WP\SQL;
+use MAOSIJI\LU\LUArray;
 use MAOSIJI\LU\LUSend;
 
 if ( ! defined( 'ABSPATH' ) ) { die; }
@@ -113,37 +114,22 @@ if ( !class_exists('LUWPDBSQL') ) {
             $colVerify = $this->verify('cols', $col);
             if ( $colVerify['code'] == 0 ) { return $colVerify; }
 
-            $whereValue = array();
-            // 编写 where 语句
             $whereSQL = '';
-
+            $whereValue = '';
             if ( !empty($whereParam) || !empty($whereFormat) || !empty($whereCompare) ) {
-
                 // 检测 where 输入是否正确
                 $whereVerify = $this->verify('where', array(
                     'meta' => $whereParam,
                     'format' => $whereFormat,
                     'compare' => $whereCompare,
                 ));
-                if ( $whereVerify['code'] == 0 ) { return $whereVerify; }
-
-                $whereSQL .= ' WHERE ';
-                $wn = 0;
-                foreach ( $whereParam as $key => $value ) {
-                    if ( is_array($value) ) {
-                        $n = 0;
-                        foreach ( $value as $v ) {
-                            $whereSQL .= ($wn!==0||$n!==0 ? ' AND ':'') . ' '.$key.$whereCompare[$wn][$n].$whereFormat[$wn][$n] . ' ';
-                            $whereValue[] = $v;
-                            $n++;
-                        }
-                    } else {
-                        $whereSQL .= ($wn!==0?' AND ':'') . ' '.$key.$whereCompare[$wn].$whereFormat[$wn].' ';
-                        $whereValue[] = $value;
-                    }
-
-                    $wn++;
+                if ($whereVerify['code'] == 0) {
+                    return $whereVerify;
                 }
+
+                $where = $this->generate_where_sql();
+                $whereSQL = $where['sql'];
+                $whereValue = $where['value'];
             }
 
             $dql = new LUWPDQL();
@@ -191,36 +177,22 @@ if ( !class_exists('LUWPDBSQL') ) {
             $juheVerify = $this->verify('juhe', $juhe);
             if ( $juheVerify['code'] == 0 ) { return $juheVerify; }
 
-            $whereValue = array();
-            // 编写 where 语句
             $whereSQL = '';
+            $whereValue = '';
             if ( !empty($whereParam) || !empty($whereFormat) || !empty($whereCompare) ) {
-
                 // 检测 where 输入是否正确
                 $whereVerify = $this->verify('where', array(
                     'meta' => $whereParam,
                     'format' => $whereFormat,
                     'compare' => $whereCompare,
                 ));
-                if ( $whereVerify['code'] == 0 ) { return $whereVerify; }
-
-                $whereSQL .= ' WHERE ';
-                $wn = 0;
-                foreach ( $whereParam as $key => $value ) {
-                    if ( is_array($value) ) {
-                        $n = 0;
-                        foreach ( $value as $v ) {
-                            $whereSQL .= ($wn!==0||$n!==0 ? ' AND ':'') . ' '.$key.$whereCompare[$wn][$n].$whereFormat[$wn][$n] . ' ';
-                            $whereValue[] = $v;
-                            $n++;
-                        }
-                    } else {
-                        $whereSQL .= ($wn!==0?' AND ':'') . ' '.$key.$whereCompare[$wn].$whereFormat[$wn].' ';
-                        $whereValue[] = $value;
-                    }
-
-                    $wn++;
+                if ($whereVerify['code'] == 0) {
+                    return $whereVerify;
                 }
+
+                $where = $this->generate_where_sql();
+                $whereSQL = $where['sql'];
+                $whereValue = $where['value'];
             }
 
             // 合并语句
@@ -289,36 +261,22 @@ if ( !class_exists('LUWPDBSQL') ) {
             $outputVerify = $this->verify('output', $output);
             if ( $outputVerify['code'] == 0 ) { return $outputVerify; }
 
-            $whereValue = array();
-            // 编写 where 语句
             $whereSQL = '';
-            if ( !empty($whereParam) || !empty($whereCompare) || !empty($whereFormat) ) {
-
+            $whereValue = '';
+            if ( !empty($whereParam) || !empty($whereFormat) || !empty($whereCompare) ) {
                 // 检测 where 输入是否正确
                 $whereVerify = $this->verify('where', array(
                     'meta' => $whereParam,
                     'format' => $whereFormat,
                     'compare' => $whereCompare,
                 ));
-                if ( $whereVerify['code'] == 0 ) { return $whereVerify; }
-
-                $whereSQL .= ' WHERE ';
-                $wn = 0;
-                foreach ( $whereParam as $key => $value ) {
-                    if ( is_array($value) ) {
-                        $n = 0;
-                        foreach ( $value as $v ) {
-                            $whereSQL .= ($wn!==0||$n!==0 ? ' AND ':'') . ' '.$key.$whereCompare[$wn][$n].$whereFormat[$wn][$n] . ' ';
-                            $whereValue[] = $v;
-                            $n++;
-                        }
-                    } else {
-                        $whereSQL .= ($wn!==0?' AND ':'') . ' '.$key.$whereCompare[$wn].$whereFormat[$wn].' ';
-                        $whereValue[] = $value;
-                    }
-
-                    $wn++;
+                if ($whereVerify['code'] == 0) {
+                    return $whereVerify;
                 }
+
+                $where = $this->generate_where_sql();
+                $whereSQL = $where['sql'];
+                $whereValue = $where['value'];
             }
 
             // 编写 orderby 语句
@@ -338,17 +296,16 @@ if ( !class_exists('LUWPDBSQL') ) {
 
         /**
          * 查询多行
-         * @param $where                : (array) where的数组，必须包含元素 array('meta'=>'','compare=>'','format'=>'')
-         *                                          meta : array(字段名称=>字段值)
-         *                                          compare : array('=') 运算符数组（=、<、LIKE等）
-         *                                          format : array('%d') 格式数组
+         * @param string $cols          : 选择特定列或所有列，默认 *，全部显示。若写多个，如：id,name,age
+         * @param array $whereParam     : where数组，如 array(字段名称=>字段值)
+         * @param array $whereCompare   : where符号数组，如 array('=') 运算符数组（=、<、LIKE等）
+         * @param array $whereFormat    : where格式数组，如 array('%d')
+         * @param bool $isCache         : 是否缓存，只在当前页面缓存，默认 false。
+         * @param $limit                : (int) 查询数量，不可使用 OFFSET 属性，如要分页可根据上一次查询的id来操作。默认 0，即无限制
+         * @param $output               : (string) OBJECT（对象）、ARRAY_A（关联数组）、ARRAY_N（数值数组）。默认 ARRAY_A。
          * @param $orderSort            : (array) 排序（如 ORDER BY id DESC ），必须包含元素 array('orderby'=>'id', 'sort'=>'DESC')
          *                                          orderby : string 字段名
          *                                          sort : 排序方式 ASC 正序 DESC 倒序
-         * @param bool $isCache         : 是否缓存，默认 false。
-         * @param $limit                : (int) 查询数量，不可使用 OFFSET 属性，如要分页可根据上一次查询的id来操作。默认 0，即无限制
-         * @param $col                  : (string) 选择特定列或所有列，默认 *，全部显示。若写多个，如：id,name,age
-         * @param $output               : (string) OBJECT（对象）、ARRAY_A（关联数组）、ARRAY_N（数值数组）。默认 ARRAY_A。
          * @return array
          */
         protected function get_results( string $cols='*', array $whereParam=[], array $whereCompare=[], array $whereFormat=[], bool $isCache=false, int $limit=0, string $output='ARRAY_A', array $orderSort=array('orderby'=>'id', 'sort'=>'DESC') ): array
@@ -376,9 +333,8 @@ if ( !class_exists('LUWPDBSQL') ) {
 
             $orderSort = $orderSortVerify['data'];
 
-            $whereValue = array();
-            // 编写 where 语句
             $whereSQL = '';
+            $whereValue = '';
             if ( !empty($whereParam) || !empty($whereFormat) || !empty($whereCompare) ) {
                 // 检测 where 输入是否正确
                 $whereVerify = $this->verify('where', array(
@@ -386,25 +342,13 @@ if ( !class_exists('LUWPDBSQL') ) {
                     'format' => $whereFormat,
                     'compare' => $whereCompare,
                 ));
-                if ( $whereVerify['code'] == 0 ) { return $whereVerify; }
-
-                $whereSQL .= ' WHERE ';
-                $wn = 0;
-                foreach ( $whereParam as $key => $value ) {
-                    if ( is_array($value) ) {
-                        $n = 0;
-                        foreach ( $value as $v ) {
-                            $whereSQL .= ($wn!==0||$n!==0 ? ' AND ':'') . ' '.$key.$whereCompare[$wn][$n].$whereFormat[$wn][$n] . ' ';
-                            $whereValue[] = $v;
-                            $n++;
-                        }
-                    } else {
-                        $whereSQL .= ($wn!==0?' AND ':'') . ' '.$key.$whereCompare[$wn].$whereFormat[$wn].' ';
-                        $whereValue[] = $value;
-                    }
-
-                    $wn++;
+                if ($whereVerify['code'] == 0) {
+                    return $whereVerify;
                 }
+
+                $where = $this->generate_where_sql();
+                $whereSQL = $where['sql'];
+                $whereValue = $where['value'];
             }
 
             // 编写 orderby 语句
@@ -414,16 +358,17 @@ if ( !class_exists('LUWPDBSQL') ) {
             $limitSQL = '';
             if ( $limit>0 ) {
                 $limitSQL = ' LIMIT %d ';
-                $params[] = $limit;
+                $limitValue[] = $limit;
             }
 
             // 合并语句
             $sql = $whereSQL.$orderSortSQL.$limitSQL;
+            $value = array_merge( $whereValue, $limitValue );
 
 //            return array('code'=>0, 'msg'=>'测试', 'data2'=>$sql, 'data3'=>$orderSort);
 
             $dql = new LUWPDQL();
-            $result = $dql->get_results( $this->tableName, $cols, $sql, $whereValue, $output );
+            $result = $dql->get_results( $this->tableName, $cols, $sql, $value, $output );
 
             if ( $isCache ) {
                 self::$query_cache[ $cache_key ] = $result;
@@ -431,6 +376,117 @@ if ( !class_exists('LUWPDBSQL') ) {
 
             return $result;
         }
+
+        /**
+         * 组装 where 语句
+         * @param array $whereParam : where数组，如 array(字段名称=>字段值)
+         * @param array $whereCompare : where符号数组，如 array('=') 运算符数组（=、<、LIKE等）
+         * @param array $whereFormat : where格式数组，如 array('%d')
+         * @return array
+         */
+        private function generate_where_sql( array $whereParam=[], array $whereCompare=[], array $whereFormat=[] ): array
+        {
+            /**
+            array(
+                'post_status'   => 'publish',
+                'or'            => array(
+                    'post_title'    => '标题',
+                    'post_contnet'  => '内容',
+                ),
+                'post_id'       => array(
+                    1,2,3,4,5,6
+                ),
+                'post_parent'   => 1
+            );
+
+            array(
+                '=',
+                array( 'LIKE', 'LIKE' ),
+                array( '=','=','=','=','=','=' )
+                array( '=' )
+            )
+
+            array(
+                '%s',
+                array( '%s','%s' ),
+                array( '%d','%d','%d','%d','%d','%d' ),
+                '%d'
+            )
+             * */
+            $whereValue = array();
+            $whereSQL   = '';
+
+            $whereSQL .= ' WHERE ';
+            $wn = 0;
+            foreach ( $whereParam as $key => $value ) {
+
+                // 如果是索引数组 OR
+                if ( is_array($value) && (new LUArray())->get_array_type($value)==='index' ) {
+                    $n = 0;
+                    for ( $i = 0; $i < count($value); $i++ ) {
+                        if ( $i===0 ) {
+                            $whereSQL .= '  ( ';
+                        }
+
+                        $whereSQL .= ($wn!==0||$n!==0 ? ' OR ':' ').$key.$whereCompare[$wn][$n].$whereFormat[$wn][$n];
+
+                        if ( $i===count($value)-1 ) {
+                            $whereSQL .= ' )  ';
+                        }
+
+                        if ( $whereCompare[$wn][$n]==='like' || $whereCompare[$wn][$n]==='LIKE' ) {
+                            global $wpdb;
+                            $whereValue[] = '%'.$wpdb->esc_like($value[$i]).'%';
+                        } else {
+                            $whereValue[] = $value[$i];
+                        }
+
+                        $n++;
+                    }
+                }
+
+                // 如果是关联数组 OR
+                if ( is_array($value) && (new LUArray())->get_array_type($value)==='relate' ) {
+                    $n = 0;
+                    foreach ( $value as $k=>$v ) {
+                        if ( $n===0 ) {
+                            $whereSQL .= '  ( ';
+                        }
+
+                        $whereSQL .= ($wn!==0||$n!==0 ? ' OR ':' ').$k.$whereCompare[$wn][$n].$whereFormat[$wn][$n];
+
+                        if ( $n===count($value)-1 ) {
+                            $whereSQL .= ' )  ';
+                        }
+
+                        if ( $whereCompare[$wn][$n]==='like' || $whereCompare[$wn][$n]==='LIKE' ) {
+                            global $wpdb;
+                            $whereValue[] = '%'.$wpdb->esc_like($value[$i]).'%';
+                        } else {
+                            $whereValue[] = $value[$i];
+                        }
+
+                        $n++;
+                    }
+                }
+
+                // 如果不是数组 AND
+                if ( !is_array($value) ) {
+                    $whereSQL .= ($wn!==0?' AND ':'') . ' '.$key.$whereCompare[$wn].$whereFormat[$wn].' ';
+                    if ( $whereCompare[$wn][$n]==='like' || $whereCompare[$wn][$n]==='LIKE' ) {
+                        global $wpdb;
+                        $whereValue[] = '%'.$wpdb->esc_like($value[$i]).'%';
+                    } else {
+                        $whereValue[] = $value[$i];
+                    }
+                }
+
+                $wn++;
+            }
+
+            return array('sql'=>$whereSQL, 'value'=>$whereValue);
+        }
+
 
         /**************************************************
          * 数据表插入
@@ -626,28 +682,8 @@ if ( !class_exists('LUWPDBSQL') ) {
 
                 case 'where':
 
-                    if ( !empty($args) ) {
-
-                        if ( !isset($args['meta']) || !isset($args['compare']) || !isset($args['format']) ) {
-                            return array('code'=>0, 'msg'=>'参数 '.$args_name.' 数组缺少元素', 'data'=>$args);
-                        }
-
-                        if ( !is_array($args['meta']) || !is_array($args['compare']) || !is_array($args['format']) ) {
-                            return array('code'=>0, 'msg'=>'参数 '.$args_name.' 数组元素不是数组', 'data'=>$args);
-                        }
-
-                        // 可以都为空，但不能有的为空，有的不为空
-//                        if ( empty($args['meta']) || empty($args['compare']) || empty($args['format']) ) {
-//                            return array('code'=>0, 'msg'=>'参数 '.$args_name.' 数组元素不可为空', 'data'=>$args);
-//                        }
-
-                        if ( count($args['meta']) !== count($args['compare']) &&
-                            count($args['compare']) !== count($args['format']) &&
-                            count($args['format']) !== count($args['meta'])
-                        ) {
-                            return array('code'=>0, 'msg'=>'参数 '.$args_name.' 数组元素的长度不一致', 'data'=>$args);
-                        }
-
+                    if ( !(new LUArray())->arrays_shape_match( $args['meta'], $args['compare'], $args['format'] ) ) {
+                        return (new LUSend())->send_array( 0, 'whereParam / whereCompar / whereFormat 三个参数的结构不一致', $args );
                     }
 
                     break;
@@ -662,19 +698,19 @@ if ( !class_exists('LUWPDBSQL') ) {
                 case 'param':
 
                     if ( !isset($args['param']) || !isset($args['format']) ) {
-                        return array('code'=>0, 'msg'=>'参数 '.$args_name.' 数组缺少元素', 'data'=>$args);
+                        return (new LUSend())->send_array( 0, '参数 '.$args_name.' 数组缺少元素', $args );
                     }
 
                     if ( !is_array($args['param']) || !is_array($args['format']) ) {
-                        return array('code'=>0, 'msg'=>'参数 '.$args_name.' 数组元素不是数组', 'data'=>$args);
+                        return (new LUSend())->send_array( 0, '参数 '.$args_name.' 数组元素不是数组', $args );
                     }
 
                     if ( empty($args['param']) || empty($args['format']) ) {
-                        return array('code'=>0, 'msg'=>'参数 '.$args_name.' 数组元素不可为空', 'data'=>$args);
+                        return (new LUSend())->send_array( 0, '参数 '.$args_name.' 数组元素不可为空', $args );
                     }
 
                     if ( count($args['param']) !== count($args['format']) ) {
-                        return array('code'=>0, 'msg'=>'参数 '.$args_name.' 数组元素的长度不一致', 'data'=>$args);
+                        return (new LUSend())->send_array( 0, '参数 '.$args_name.' 数组元素的长度不一致', $args );
                     }
 
                     break;
@@ -682,7 +718,7 @@ if ( !class_exists('LUWPDBSQL') ) {
                 case 'limit':
 
                     if ( !is_int($args) ) {
-                        return array('code'=>0, 'msg'=>'参数 '.$args_name.' 不是正整数', 'data'=>$args);
+                        return (new LUSend())->send_array( 0, '参数 '.$args_name.' 不是正整数', $args );
                     }
 
                     break;
@@ -690,7 +726,7 @@ if ( !class_exists('LUWPDBSQL') ) {
                 case 'cols':
 
                     if ( !is_string($args) ) {
-                        return array('code'=>0, 'msg'=>'参数 '.$args_name.' 不是字符串', 'data'=>$args);
+                        return (new LUSend())->send_array( 0, '参数 '.$args_name.' 不是字符串', $args );
                     }
 
                     break;
@@ -698,11 +734,11 @@ if ( !class_exists('LUWPDBSQL') ) {
                 case 'col':
 
                     if ( !is_string($args) ) {
-                        return array('code'=>0, 'msg'=>'参数 '.$args_name.' 不是字符串', 'data'=>$args);
+                        return (new LUSend())->send_array( 0, '参数 '.$args_name.' 不是字符串', $args );
                     }
 
                     if ( strpos($args, ' ') !== false ) {
-                        return array('code'=>0, 'msg'=>'参数 '.$args_name.' 含有空格，应该传入一列的名称，不能传入多列名称', 'data'=>$args);
+                        return (new LUSend())->send_array( 0, '参数 '.$args_name.' 含有空格，应该传入一列的名称，不能传入多列名称', $args );
                     }
 
                     break;
@@ -710,7 +746,7 @@ if ( !class_exists('LUWPDBSQL') ) {
                 case 'output':
 
                     if ( !in_array($args, array('ARRAY_A', 'ARRAY_N', 'OBJECT')) ) {
-                        return array('code'=>0, 'msg'=>'参数 '.$args_name.' 只能是 ARRAY_A、ARRAY_N、OBJECT', 'data'=>$args);
+                        return (new LUSend())->send_array( 0, '参数 '.$args_name.' 只能是 ARRAY_A、ARRAY_N、OBJECT', $args );
                     }
 
                     break;
@@ -718,7 +754,7 @@ if ( !class_exists('LUWPDBSQL') ) {
                 case 'juhe':
 
                     if ( !in_array($args, array('COUNT', 'SUM', 'AVG', 'MIN', 'MAX', 'count', 'sum', 'avg', 'min', 'max')) ) {
-                        return array('code'=>0, 'msg'=>'参数 '.$args_name.' 只能是 COUNT、SUM、AVG、MIN、MAX', 'data'=>$args);
+                        return (new LUSend())->send_array( 0, '参数 '.$args_name.' 只能是 COUNT、SUM、AVG、MIN、MAX', $args );
                     }
 
                     break;
