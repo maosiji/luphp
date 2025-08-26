@@ -127,7 +127,7 @@ if ( !class_exists('LUWPDBSQL') ) {
                     return $whereVerify;
                 }
 
-                $where = $this->generate_where_sql();
+                $where = $this->generate_where_sql( $whereParam, $whereCompare, $whereFormat );
                 $whereSQL = $where['sql'];
                 $whereValue = $where['value'];
             }
@@ -190,7 +190,7 @@ if ( !class_exists('LUWPDBSQL') ) {
                     return $whereVerify;
                 }
 
-                $where = $this->generate_where_sql();
+                $where = $this->generate_where_sql( $whereParam, $whereCompare, $whereFormat );
                 $whereSQL = $where['sql'];
                 $whereValue = $where['value'];
             }
@@ -274,7 +274,7 @@ if ( !class_exists('LUWPDBSQL') ) {
                     return $whereVerify;
                 }
 
-                $where = $this->generate_where_sql();
+                $where = $this->generate_where_sql( $whereParam, $whereCompare, $whereFormat );
                 $whereSQL = $where['sql'];
                 $whereValue = $where['value'];
             }
@@ -346,7 +346,7 @@ if ( !class_exists('LUWPDBSQL') ) {
                     return $whereVerify;
                 }
 
-                $where = $this->generate_where_sql();
+                $where = $this->generate_where_sql( $whereParam, $whereCompare, $whereFormat );
                 $whereSQL = $where['sql'];
                 $whereValue = $where['value'];
             }
@@ -473,7 +473,7 @@ if ( !class_exists('LUWPDBSQL') ) {
                 // 如果不是数组 AND
                 if ( !is_array($value) ) {
                     $whereSQL .= ($wn!==0?' AND ':'') . ' '.$key.$whereCompare[$wn].$whereFormat[$wn].' ';
-                    if ( $whereCompare[$wn][$n]==='like' || $whereCompare[$wn][$n]==='LIKE' ) {
+                    if ( $whereCompare[$wn]==='like' || $whereCompare[$wn]==='LIKE' ) {
                         global $wpdb;
                         $whereValue[] = '%'.$wpdb->esc_like($value).'%';
                     } else {
