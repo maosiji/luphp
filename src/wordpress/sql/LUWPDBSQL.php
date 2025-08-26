@@ -356,6 +356,7 @@ if ( !class_exists('LUWPDBSQL') ) {
 
             // 编写 limit 语句
             $limitSQL = '';
+            $limitValue = [];
             if ( $limit>0 ) {
                 $limitSQL = ' LIMIT %d ';
                 $limitValue[] = $limit;
@@ -425,10 +426,10 @@ if ( !class_exists('LUWPDBSQL') ) {
                     $n = 0;
                     for ( $i = 0; $i < count($value); $i++ ) {
                         if ( $i===0 ) {
-                            $whereSQL .= '  ( ';
+                            $whereSQL .= ($wn!==0?' AND ':'').' ( ';
                         }
 
-                        $whereSQL .= ($wn!==0||$n!==0 ? ' OR ':' ').$key.$whereCompare[$wn][$n].$whereFormat[$wn][$n];
+                        $whereSQL .= ($n!==0 ? ' OR ':' ').$key.$whereCompare[$wn][$n].$whereFormat[$wn][$n];
 
                         if ( $i===count($value)-1 ) {
                             $whereSQL .= ' )  ';
@@ -450,10 +451,10 @@ if ( !class_exists('LUWPDBSQL') ) {
                     $n = 0;
                     foreach ( $value as $k=>$v ) {
                         if ( $n===0 ) {
-                            $whereSQL .= '  ( ';
+                            $whereSQL .= ($wn!==0?' AND ':'').' ( ';
                         }
 
-                        $whereSQL .= ($wn!==0||$n!==0 ? ' OR ':' ').$k.$whereCompare[$wn][$n].$whereFormat[$wn][$n];
+                        $whereSQL .= ($n!==0 ? ' OR ':' ').$k.$whereCompare[$wn][$n].$whereFormat[$wn][$n];
 
                         if ( $n===count($value)-1 ) {
                             $whereSQL .= ' )  ';
