@@ -461,9 +461,9 @@ if ( !class_exists('LUWPDBSQL') ) {
 
                         if ( $whereCompare[$wn][$n]==='like' || $whereCompare[$wn][$n]==='LIKE' ) {
                             global $wpdb;
-                            $whereValue[] = '%'.$wpdb->esc_like($value[$i]).'%';
+                            $whereValue[] = '%'.$wpdb->esc_like($v).'%';
                         } else {
-                            $whereValue[] = $value[$i];
+                            $whereValue[] = $v;
                         }
 
                         $n++;
@@ -475,9 +475,9 @@ if ( !class_exists('LUWPDBSQL') ) {
                     $whereSQL .= ($wn!==0?' AND ':'') . ' '.$key.$whereCompare[$wn].$whereFormat[$wn].' ';
                     if ( $whereCompare[$wn][$n]==='like' || $whereCompare[$wn][$n]==='LIKE' ) {
                         global $wpdb;
-                        $whereValue[] = '%'.$wpdb->esc_like($value[$i]).'%';
+                        $whereValue[] = '%'.$wpdb->esc_like($value).'%';
                     } else {
-                        $whereValue[] = $value[$i];
+                        $whereValue[] = $value;
                     }
                 }
 
