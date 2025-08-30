@@ -555,18 +555,18 @@ if ( !class_exists('LUWPDBSQL') ) {
          *
          * @return array
          */
-        protected function update( array $param, array $format, array $whereParam, array $wheresFormat ): array
+        protected function update( array $param, array $format, array $whereParam, array $whereFormat ): array
         {
             // 检测  输入是否正确
             $param1 = $this->verify('param', array('param'=>$param, 'format'=>$format));
             if ( $param1['code'] == 0 ) { return $param1; }
 
             // 检测  输入是否正确
-            $param2 = $this->verify('param', array('param'=>$whereParam, 'format'=>$wheresFormat));
+            $param2 = $this->verify('param', array('param'=>$whereParam, 'format'=>$whereFormat));
             if ( $param2['code'] == 0 ) { return $param2; }
 
             $dml = new LUWPDML();
-            return $dml->update( $this->tableName, $param, $format, $whereParam, $wheresFormat );
+            return $dml->update( $this->tableName, $param, $format, $whereParam, $whereFormat );
         }
 
         /**************************************************

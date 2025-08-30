@@ -18,6 +18,7 @@ if ( !class_exists( 'LUTime' ) ) {
 		}
 		
 		/**
+         * 时间间隔 天时分秒
 		 * @param int $begin_time		: 时间戳 开始时间
 		 * @param int $end_time        	: 时间戳 结束时间
 		 *
@@ -47,7 +48,8 @@ if ( !class_exists( 'LUTime' ) ) {
 			return array( "day" => $days, "hour" => $hours, "min" => $mins, "sec" => $secs );
 		}
 
-        /** 计算年龄
+        /**
+         * 计算年龄
          * @param string $birthday
          * @return int
          */
@@ -67,6 +69,29 @@ if ( !class_exists( 'LUTime' ) ) {
         /****************************************************
          * 获取未来最近的整秒时间（戳）
          *****************************************************/
+
+        /**
+         * 获取未来最近的整秒时间（格式化字符串 Y-m-d H:i:s）
+         *
+         * @param int $timestamp 可选 Unix 时间戳
+         * @return string
+         */
+        public function get_next_full_second_time(int $timestamp = 0): string
+        {
+            $datetime = $this->_get_next_full_second_time($timestamp);
+            return $datetime->format('Y-m-d H:i:s');
+        }
+        /**
+         * 获取未来最近的整秒时间戳
+         *
+         * @param int $timestamp 可选 Unix 时间戳
+         * @return int
+         */
+        public function get_next_full_second_timestamp(int $timestamp = 0): int
+        {
+            $datetime = $this->_get_next_full_second_time($timestamp);
+            return $datetime->getTimestamp();
+        }
         /**
          * 获取 DateTime 对象，表示未来最近的整秒时间点
          *
@@ -93,30 +118,98 @@ if ( !class_exists( 'LUTime' ) ) {
 
             return $now;
         }
+
+        /****************************************************
+         * 获取 $timestamp 或当天的开始时间（戳）
+         *****************************************************/
+
         /**
-         * 获取未来最近的整秒时间（格式化字符串）
+         * 获取指定时间戳当天的开始时间（00:00:00）的格式化字符串
          *
          * @param int $timestamp 可选 Unix 时间戳
-         * @return string
+         * @return string 格式：Y-m-d H:i:s
          */
-        public function get_next_full_second_time(int $timestamp = 0): string
+        public function get_day_start_time(int $timestamp = 0): string
         {
-            $datetime = $this->_get_next_full_second_time($timestamp);
+            $datetime = $this->_get_day_start_datetime($timestamp);
             return $datetime->format('Y-m-d H:i:s');
         }
         /**
-         * 获取未来最近的整秒时间戳
+         * 获取指定时间戳当天的开始时间（00:00:00）的时间戳
          *
-         * @param int $timestamp 可选 Unix 时间戳
+         * @param int $timestamp 可选 Unix 时间戳，传 0 表示当前时间
          * @return int
          */
-        public function get_next_full_second_timestamp(int $timestamp = 0): int
+        public function get_day_start_timestamp(int $timestamp = 0): int
         {
-            $datetime = $this->_get_next_full_second_time($timestamp);
+            $datetime = $this->_get_day_start_datetime($timestamp);
             return $datetime->getTimestamp();
         }
+        /**
+         * 获取 DateTime 对象，表示指定时间戳当天的开始时间（00:00:00）
+         *
+         * @param int $timestamp 可选 Unix 时间戳
+         * @return \DateTime
+         */
+        private function _get_day_start_datetime(int $timestamp = 0): \DateTime
+        {
+            if ($timestamp > 0) {
+                $date = new \DateTime("@$timestamp");
+            } else {
+                $date = new \DateTime();
+            }
 
+            // 设置为当天 00:00:00
+            $date->setTime(0, 0, 0);
 
+            return $date;
+        }
+
+        /****************************************************
+         * 获取 $timestamp 或当天的结束时间（戳）
+         *****************************************************/
+
+        /**
+         * 获取指定时间戳当天的结束时间（23:59:59）的格式化字符串
+         *
+         * @param int $timestamp 可选 Unix 时间戳
+         * @return string 格式：Y-m-d H:i:s
+         */
+        public function get_day_end_time(int $timestamp = 0): string
+        {
+            $datetime = $this->_get_day_end_datetime($timestamp);
+            return $datetime->format('Y-m-d H:i:s');
+        }
+        /**
+         * 获取指定时间戳当天的结束时间（23:59:59）的时间戳
+         *
+         * @param int $timestamp 可选 Unix 时间戳，传 0 表示当前时间
+         * @return int
+         */
+        public function get_day_end_timestamp(int $timestamp = 0): int
+        {
+            $datetime = $this->_get_day_end_datetime($timestamp);
+            return $datetime->getTimestamp();
+        }
+        /**
+         * 获取 DateTime 对象，表示指定时间戳当天的结束时间（23:59:59）
+         *
+         * @param int $timestamp 可选 Unix 时间戳
+         * @return \DateTime
+         */
+        private function _get_day_end_datetime(int $timestamp = 0): \DateTime
+        {
+            if ($timestamp > 0) {
+                $date = new \DateTime("@$timestamp");
+            } else {
+                $date = new \DateTime();
+            }
+
+            // 设置为当天 23:59:59
+            $date->setTime(23, 59, 59);
+
+            return $date;
+        }
 
 
 	}
