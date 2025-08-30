@@ -100,10 +100,9 @@ if ( !class_exists( 'LUTime' ) ) {
          */
         private function _get_next_full_second_time(int $timestamp = 0): \DateTime
         {
+            $now = new \DateTime();
             if ($timestamp > 0) {
-                $now = new \DateTime("@$timestamp");
-            } else {
-                $now = new \DateTime();
+                $now->setTimestamp($timestamp);
             }
 
             $seconds = (int)$now->format('s');
@@ -153,10 +152,9 @@ if ( !class_exists( 'LUTime' ) ) {
          */
         private function _get_day_start_datetime(int $timestamp = 0): \DateTime
         {
+            $date = new \DateTime();
             if ($timestamp > 0) {
-                $date = new \DateTime("@$timestamp");
-            } else {
-                $date = new \DateTime();
+                $date->setTimestamp($timestamp);
             }
 
             // 设置为当天 00:00:00
@@ -199,10 +197,9 @@ if ( !class_exists( 'LUTime' ) ) {
          */
         private function _get_day_end_datetime(int $timestamp = 0): \DateTime
         {
+            $date = new \DateTime();
             if ($timestamp > 0) {
-                $date = new \DateTime("@$timestamp");
-            } else {
-                $date = new \DateTime();
+                $date->setTimestamp($timestamp);
             }
 
             // 设置为当天 23:59:59
