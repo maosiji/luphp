@@ -210,6 +210,27 @@ if ( !class_exists('LUArray') ) {
             return true;
         }
 
+        /**
+         * 生成一个和传入数组的结构（键名按索引数组递增）一样的数组
+         * @param array $arr:原数组
+         * @param array $values:新生成的数组的值
+         * @return array : 新数组
+         */
+        public function create_index_array_by( array $arr, array $values ): array
+        {
+            $result = [];
+
+            foreach ($arr as $key=>$value) {
+                if (is_array($value)) {
+                    $result[] = $this->create_index_array_by($value, $values);
+                } else {
+                    $result[] = $values[$key];
+                }
+            }
+
+            return $result;
+        }
+
 
 
 
