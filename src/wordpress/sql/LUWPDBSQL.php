@@ -387,105 +387,111 @@ if ( !class_exists('LUWPDBSQL') ) {
          */
         private function generate_where_sql( array $whereParam=[], array $whereCompare=[], array $whereFormat=[] ): array
         {
-            /**
+            /*
             array(
+                // AND
                 'post_status'   => 'publish',
+                // OR
                 'or'            => array(
                     'post_title'    => '标题',
                     'post_contnet'  => '内容',
+                    'post_id'       => array(
+                        1,2,3,4,5,6
+                    ),
                 ),
-                'post_id'       => array(
-                    1,2,3,4,5,6
-                ),
-                'post_parent'   => 1
+                // AND
+                'post_parent'   => 1,
+                // AND
+                'create_time'   => array(
+                    2025-01-01 00:00:00,
+                    2025-01-01 23:59:59
+                )
             );
 
             array(
                 '=',
-                array( 'LIKE', 'LIKE' ),
-                array( '=','=','=','=','=','=' )
-                array( '=' )
+                array( 'LIKE', 'LIKE', array( '=','=','=','=','=','=' ) ),
+                array( '=' ),
+                array( '>=', '<=' )
             )
 
             array(
                 '%s',
-                array( '%s','%s' ),
-                array( '%d','%d','%d','%d','%d','%d' ),
-                '%d'
+                array( '%s','%s', array( '%d','%d','%d','%d','%d','%d' ) ),
+                '%d',
+                array( '%s', '%s' )
             )
              * */
             $whereValue = array();
             $whereSQL   = '';
 
             $whereSQL .= ' WHERE ';
-            $wn = 0;
+            $o = 0;
             foreach ( $whereParam as $key => $value ) {
 
-                // 如果是索引数组 OR
-                if ( is_array($value) && (new LUArray())->get_array_type($value)==='index' ) {
-                    $n = 0;
-                    for ( $i = 0; $i < count($value); $i++ ) {
-                        if ( $i===0 ) {
-                            $whereSQL .= ($wn!==0?' AND ':'').' ( ';
+                // key为or时，才组装成or语句
+                if ( strtolower($key)==='or' && is_array($value) ) {
+                    $p = 0;
+                    foreach ( $value as $pk=>$pv ) {
+                        if ( $p===0 ) {
+                            $whereSQL .= ($o!==0?' AND ':'').' ( ';
                         }
 
-                        $whereSQL .= ($n!==0 ? ' OR ':' ').$key.$whereCompare[$wn][$n].$whereFormat[$wn][$n];
+                        // 如果不是数组
+                        if ( !is_array($pv) ) {
+                            $whereSQL .= ($p!==0 ? ' OR ':' ').$pk.$whereCompare[$o][$p].$whereFormat[$o][$p];
+                            $whereValue[] = strtolower($whereCompare[$o][$p])==='like' ? $this->_like_sql($pv) : $pv;
+                        }
 
-                        if ( $i===count($value)-1 ) {
+                        // 如果是三级数组
+                        if ( is_array($pv) ) {
+                            $q = 0;
+                            foreach ( $pv as $qk=>$qv ) {
+                                $whereSQL .= ($p!==0 ? ' OR ':' ').$pk.$whereCompare[$o][$p][$q].$whereFormat[$o][$p][$q];
+                                $whereValue[] = strtolower($whereCompare[$o][$p][$q])==='like' ? $this->_like_sql($qv) : $qv;
+
+                                $q++;
+                            }
+                        }
+
+                        if ( $p===count($value)-1 ) {
                             $whereSQL .= ' )  ';
                         }
 
-                        if ( $whereCompare[$wn][$n]==='like' || $whereCompare[$wn][$n]==='LIKE' ) {
-                            global $wpdb;
-                            $whereValue[] = '%'.$wpdb->esc_like($value[$i]).'%';
-                        } else {
-                            $whereValue[] = $value[$i];
-                        }
-
-                        $n++;
+                        $p++;
                     }
                 }
+                // 都按 and 语句
+                else {
 
-                // 如果是关联数组 OR
-                if ( is_array($value) && (new LUArray())->get_array_type($value)==='relate' ) {
-                    $n = 0;
-                    foreach ( $value as $k=>$v ) {
-                        if ( $n===0 ) {
-                            $whereSQL .= ($wn!==0?' AND ':'').' ( ';
-                        }
-
-                        $whereSQL .= ($n!==0 ? ' OR ':' ').$k.$whereCompare[$wn][$n].$whereFormat[$wn][$n];
-
-                        if ( $n===count($value)-1 ) {
-                            $whereSQL .= ' )  ';
-                        }
-
-                        if ( $whereCompare[$wn][$n]==='like' || $whereCompare[$wn][$n]==='LIKE' ) {
-                            global $wpdb;
-                            $whereValue[] = '%'.$wpdb->esc_like($v).'%';
-                        } else {
-                            $whereValue[] = $v;
-                        }
-
-                        $n++;
+                    // 如果不是数组
+                    if ( !is_array($value) ) {
+                        $whereSQL .= ($o!==0?' AND ':'') . ' '.$key.$whereCompare[$o].$whereFormat[$o].' ';
+                        $whereValue[] = strtolower($whereCompare[$o])==='like' ? $this->_like_sql($value) : $value;
                     }
+
+                    // 如果是数组
+                    if ( is_array($value) ) {
+                        $p = 0;
+                        foreach ( $value as $pv ) {
+                            $whereSQL .= ( $o!==0||$p!==0 ? ' AND ':'' ).$key.$whereCompare[$o][$p].$whereFormat[$o][$p].' ';
+                            $whereValue[] = strtolower($whereCompare[$o][$p])==='like' ? $this->_like_sql($pv) : $pv;
+
+                            $p++;
+                        }
+                    }
+
                 }
 
-                // 如果不是数组 AND
-                if ( !is_array($value) ) {
-                    $whereSQL .= ($wn!==0?' AND ':'') . ' '.$key.$whereCompare[$wn].$whereFormat[$wn].' ';
-                    if ( $whereCompare[$wn]==='like' || $whereCompare[$wn]==='LIKE' ) {
-                        global $wpdb;
-                        $whereValue[] = '%'.$wpdb->esc_like($value).'%';
-                    } else {
-                        $whereValue[] = $value;
-                    }
-                }
-
-                $wn++;
+                $o++;
             }
 
             return array('sql'=>$whereSQL, 'value'=>$whereValue);
+        }
+        private function _like_sql( $value )
+        {
+            global $wpdb;
+            return '%'.$wpdb->esc_like($value).'%';
         }
 
 
