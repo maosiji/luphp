@@ -211,24 +211,61 @@ if ( !class_exists('LUArray') ) {
         }
 
         /**
-         * 生成一个和传入数组的结构（键名按索引数组递增）一样的数组
-         * @param array $arr:原数组
-         * @param array $values:新生成的数组的值
-         * @return array : 新数组
+         * 根据数据结构和键名映射，生成占位符数组
+         * 用途：数据库语句占位符数组的自动生成
+         * 规则：
+         *  - 纯数值键数组（索引数组）：子元素使用父键名映射
+         *  - 含字符串键数组（关联数组）：子元素使用自己的键名映射
+         *
+         * @param array $data 源数据
+         * @param array $typeMap 键名 → 占位符映射表
+         * @param mixed $default 默认占位符
+         * @return array 占位符数组
          */
-        public function create_index_array_by( array $arr, array $values ): array
-        {
+        public function generate_placeholder_array( array $data, array $typeMap, $default = '%s' ) {
             $result = [];
 
-            foreach ($arr as $key=>$value) {
+            foreach ($data as $key => $value) {
                 if (is_array($value)) {
-                    $result[] = $this->create_index_array_by($value, $values);
+                    if ($this->is_numeric_key_array($value)) {
+                        // ✅ 纯数值键数组：子元素继承当前 $key 的类型
+                        $placeholder = $typeMap[$key] ?? $default;
+                        $subArray = [];
+                        foreach ($value as $_) {
+                            if (is_array($_)) {
+                                // 嵌套数组，递归处理
+                                $subArray[] = $this->generate_placeholder_array($_, $typeMap, $default);
+                            } else {
+                                $subArray[] = $placeholder;
+                            }
+                        }
+                        $result[] = $subArray;
+                    } else {
+                        // ✅ 关联数组（含字符串键）：递归处理，子项用自己的 key 查表
+                        $result[] = $this->generate_placeholder_array($value, $typeMap, $default);
+                    }
                 } else {
-                    $result[] = $values[$key];
+                    // 叶子节点：使用自己的 key 查表
+                    $result[] = $typeMap[$key] ?? $default;
                 }
             }
 
             return $result;
+        }
+
+        /**
+         * 判断数组是否是索引数组
+         * @param $array
+         * @return bool
+         */
+        public function is_numeric_key_array( array $array ) {
+            if (!is_array($array)) return false;
+            foreach (array_keys($array) as $key) {
+                if (!is_int($key)) {
+                    return false;
+                }
+            }
+            return true;
         }
 
 
