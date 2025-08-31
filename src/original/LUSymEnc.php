@@ -50,7 +50,7 @@ if ( !class_exists( 'LUSymEnc' ) ) {
             );
 
             if ($encrypted === false) {
-//                throw new RuntimeException('加密失败: ' . openssl_error_string());
+                throw new \RuntimeException('加密失败: ' . openssl_error_string());
             }
 
             // 拼接 IV 和密文
@@ -71,12 +71,12 @@ if ( !class_exists( 'LUSymEnc' ) ) {
             // Base64 解码（严格模式）
             $combined = base64_decode($encryptedData, true);
             if ($combined === false) {
-//                throw new InvalidArgumentException('Base64 解码失败：输入不是有效的 Base64 字符串');
+                throw new \InvalidArgumentException('Base64 解码失败：输入不是有效的 Base64 字符串');
             }
 
             $ivLength = openssl_cipher_iv_length(self::CIPHER);
             if (strlen($combined) < $ivLength) {
-//                throw new InvalidArgumentException('密文过短，缺少 IV 或数据已损坏');
+                throw new \InvalidArgumentException('密文过短，缺少 IV 或数据已损坏');
             }
 
             $iv = substr($combined, 0, $ivLength);
@@ -91,7 +91,7 @@ if ( !class_exists( 'LUSymEnc' ) ) {
             );
 
             if ($decrypted === false) {
-//                throw new RuntimeException('解密失败: ' . openssl_error_string());
+                throw new \RuntimeException('解密失败: ' . openssl_error_string());
             }
 
             return $decrypted;

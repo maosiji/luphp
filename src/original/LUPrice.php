@@ -44,5 +44,8 @@ if (!class_exists('LUPrice')) {
             // 格式化输出为两位小数的字符串
             return sprintf("%.2f", $price);
         }
+
+
+
     }
 }

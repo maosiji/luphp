@@ -26,10 +26,6 @@ if (!class_exists('LUIp')) {
          */
         public function get_visitor_ip()
         {
-            $ip = '';
-            $code = 1;
-            $msg = '已获取到 IP';
-
             // 优先检查 CDN 或反向代理传来的头信息
             if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
                 // Cloudflare 用户真实 IP
@@ -54,23 +50,15 @@ if (!class_exists('LUIp')) {
                 // 最后回退到服务器直接获取的 IP
                 $ip = $_SERVER['REMOTE_ADDR'];
             } else {
-
-                $code = 0;
-                $msg = 'ip 地址未获取到';
-                $data = $ip;
-                $ip = 'Unknown';
+                $ip = 'ip 地址未获取到';
             }
 
             // 再次验证 IP 地址是否合法
             if (!filter_var($ip, FILTER_VALIDATE_IP)) {
-
-                $code = 0;
-                $msg = 'ip 地址不合法';
-                $data = $ip;
-                $ip = 'Unknown';
+                $ip = 'ip 地址不合法';
             }
 
-            return (new LUSend())->send_array( $code, $msg, $code===0?$data:$ip );
+            return $ip;
         }
 
 

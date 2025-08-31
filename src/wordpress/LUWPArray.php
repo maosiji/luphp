@@ -21,7 +21,8 @@ if (!class_exists('LUWPArray')) {
         {
         }
 
-        /** 递归清理数组值中的html标签 sanitize_text_field
+        /**
+         * 递归清理数组值中的html标签 sanitize_text_field
          * @param array $arr :要清理的数组，多维数组也可以
          * @return array
          */
