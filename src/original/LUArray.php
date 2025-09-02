@@ -268,6 +268,25 @@ if ( !class_exists('LUArray') ) {
             return true;
         }
 
+        /**
+         * 获取数组的第一个 key （兼容 PHP 5.6+）
+         *
+         * @param array $array
+         * @return mixed 第一个 key，如果数组为空则返回 null
+         */
+        public function get_first_key($array) {
+            if (!is_array($array) || empty($array)) {
+                return null;
+            }
+
+            // PHP 7.3+ 优先使用
+            if (function_exists('array_key_first')) {
+                return array_key_first($array);
+            }
+
+            // 老版本 fallback
+            return key(reset($array));
+        }
 
 
 

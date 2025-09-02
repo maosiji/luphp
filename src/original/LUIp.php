@@ -68,7 +68,7 @@ if (!class_exists('LUIp')) {
          * @param string $ip
          * @return bool
          */
-        public function is_ipv4(string $ip ): bool
+        public function is_ipv4( string $ip ): bool
         {
             return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false;
         }
@@ -78,7 +78,7 @@ if (!class_exists('LUIp')) {
          * @param string $ip
          * @return bool
          */
-        public function is_ipv6(string $ip ): bool
+        public function is_ipv6( string $ip ): bool
         {
             return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false;
         }
@@ -88,7 +88,7 @@ if (!class_exists('LUIp')) {
          * @param string $ip
          * @return bool
          */
-        public function is_ip(string $ip ): bool
+        public function is_ip( string $ip ): bool
         {
             return filter_var($ip, FILTER_VALIDATE_IP) !== false;
         }
@@ -101,7 +101,7 @@ if (!class_exists('LUIp')) {
          * FILTER_FLAG_NO_PRIV_RANGE，排除私有地址（如 192.168.x.x, 10.x.x.x, 172.16-31.x.x）
          * FILTER_FLAG_NO_RES_RANGE，排除保留地址（如 127.x.x.x 回环，169.254.x.x 链路本地，0.0.0.0 等）
          */
-        public function is_public_ip(string $ip ): bool
+        public function is_public_ip( string $ip ): bool
         {
             return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) !== false;
         }
