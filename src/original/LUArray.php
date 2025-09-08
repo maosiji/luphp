@@ -44,7 +44,7 @@ if ( !class_exists('LUArray') ) {
         }
 
         /**
-         * 数组的value是否包含某个值
+         * 验证是否包含。数组的 value 是否包含某个值
          * @param array $array      :数组
          * @param $needle           :值
          * @param bool $is_strict   :模式，默认 false，都转为字符串比较，宽松模式。true，严格模式。
@@ -60,6 +60,34 @@ if ( !class_exists('LUArray') ) {
                 }
                 else {
                     if (is_scalar($value) && strpos((string)$value, (string)$needle) !== false) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        /**
+         * 双向验证是否包含。数组的 value 是否包含某个值，某个值是否包含数组的 value
+         * @param array $array      :数组
+         * @param $needle           :值
+         * @param bool $is_strict   :模式，默认 false，都转为字符串比较，宽松模式。true，严格模式。
+         * @return bool
+         */
+        public function is_mutual_contain( array $array, $needle, bool $is_strict=false ): bool
+        {
+            foreach ($array as $value) {
+                if ( $is_strict ) {
+                    if ( strpos($value, $needle) !== false || strpos($needle, $value) !== false ) {
+                        return true;
+                    }
+                }
+                else {
+                    if ( is_scalar($value) && (
+                            strpos((string)$value, (string)$needle) !== false ||
+                            strpos((string)$needle, (string)$value) !== false
+                        ) ) {
                         return true;
                     }
                 }
