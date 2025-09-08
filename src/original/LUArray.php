@@ -97,6 +97,19 @@ if ( !class_exists('LUArray') ) {
         }
 
         /**
+         * 获取数组中的某个值出现的次数
+         * @param array $array  :数组
+         * @param $needle       :查询值
+         * @return int
+         */
+        public function get_count_of( array $array, $needle ): int
+        {
+            return count(array_filter($array, function($value) use ($needle) {
+                return $value === $needle;
+            }));
+        }
+
+        /**
          * 判断一个 PHP 数组的类型，只处理 int、string 的 key
          *
          * @param array $arr 要判断的数组
