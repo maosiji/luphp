@@ -31,20 +31,27 @@ if ( !class_exists('LUWPDBSQL') ) {
         {
             $this->tableName = $tableName;
         }
-        public static function getObj( string $tableName )
+
+        /**
+         * 每个表名单例
+         * @param string $tableName
+         * @return mixed|static|null
+         */
+        public static function getObj(string $tableName )
         {
             // 使用 get_called_class() 确保每个子类都有自己的实例
             $calledClass = get_called_class();
+            $key = $calledClass.'::'.$tableName;
 
-            if (!isset(self::$instances[$calledClass])) {
-                self::$instances[$calledClass] = null;
+            if (!isset(self::$instances[$key])) {
+                self::$instances[$key] = null;
             }
 
-            if (is_null(self::$instances[$calledClass])) {
-                self::$instances[$calledClass] = new static($tableName);
+            if (is_null(self::$instances[$key])) {
+                self::$instances[$key] = new static($tableName);
             }
 
-            return self::$instances[$calledClass];
+            return self::$instances[$key];
         }
         private function __clone()
         {
