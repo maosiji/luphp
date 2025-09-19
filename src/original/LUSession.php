@@ -168,12 +168,24 @@ if ( !class_exists('LUSession') ) {
             return false;
         }
 
+        public function get_session_id()
+        {
+            return session_id();
+        }
+
+
+
 
     }
 }
 
 // 在插件主文件或 functions.php
+// 只执行一次
 //add_action('init', function() {
+//    static $registered = false;
+//    if ($registered) return;
+//    $registered = true;
+//
 //    $session = \MAOSIJI\LU\LUSession::getInstance();
 //    $wp_now = current_time('timestamp');
 //    add_action('shutdown', function() use ($session, $wp_now) {
