@@ -1,5 +1,4 @@
 <?php
-namespace MAOSIJI\LU;
 /*
  * author               : 猫斯基
  * url                  : maosiji.com
@@ -9,6 +8,8 @@ namespace MAOSIJI\LU;
  * update               :
  * project              : luphp
  */
+
+namespace MAOSIJI\LU;
 if ( !class_exists( 'LUUrl' ) ) {
     class LUUrl
     {
@@ -142,6 +143,33 @@ if ( !class_exists( 'LUUrl' ) ) {
             return $baseUrl . ($newQuery ? '?' . $newQuery : '');
         }
 
+        /**
+         * 判断当前访问或指定 URL 是否为 HTTPS
+         * @param string|null $url 可选，指定要判断的 URL；若为空或协议相对，则按当前访问协议判断。如 传入//a.com，没有协议，则按照当前网站链接来判断。
+         * @return bool
+         */
+        public function is_https( $url = null ) {
+
+            if ($url !== null) {
+                $parsed = parse_url($url);
+                if (isset($parsed['scheme'])) {
+                    return strtolower($parsed['scheme']) === 'https';
+                }
+                // 如果 URL 无协议（如 //example.com），按当前访问协议判断
+                // fall through to current request check
+            }
+
+            // 判断当前访问是否为 HTTPS
+            if (isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1)) {
+                return true;
+            } elseif (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+                return true;
+            } elseif (isset($_SERVER['HTTP_FRONT_END_HTTPS']) && $_SERVER['HTTP_FRONT_END_HTTPS'] === 'on') {
+                return true;
+            }
+
+            return false;
+        }
 
 
     }

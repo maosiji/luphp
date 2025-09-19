@@ -119,7 +119,7 @@ if ( !class_exists( 'LUTime' ) ) {
         }
 
         /****************************************************
-         * 获取 $timestamp 或当天的开始时间（戳）
+         * 获取当天的开始时间（戳）
          *****************************************************/
 
         /**
@@ -164,7 +164,7 @@ if ( !class_exists( 'LUTime' ) ) {
         }
 
         /****************************************************
-         * 获取 $timestamp 或当天的结束时间（戳）
+         * 获取当天的结束时间（戳）
          *****************************************************/
 
         /**
@@ -208,6 +208,37 @@ if ( !class_exists( 'LUTime' ) ) {
             return $date;
         }
 
+        /****************************************************
+         * 获取未来最近的整 $interval_minutes 时间（戳）
+         *****************************************************/
+
+        /**
+         *
+         * @param int $interval_minutes :下一个整分数，必须大于0
+         * @param int $timestamp :时间戳，不填默认用 time() 获取
+         * @return int
+         *
+         * $interval_minutes=1, 获取到的是 11:00,11:01,11:02,11:03...
+         * $interval_minutes=2, 获取到的是 11:00,11:02,11:04,11:06...
+         * $interval_minutes=3, 获取到的是 11:00,11:03,11:06,11:09...
+         * $interval_minutes=60,获取到的是 11:00,12:00,13:00,14:00...
+         * */
+        public function get_next_ceil_timestamp( int $interval_minutes, int $timestamp = 0 ): int
+        {
+            if ($interval_minutes <= 0) {
+                throw new \InvalidArgumentException('interval_minutes 必须大于 0');
+            }
+            if ( $timestamp === 0 ) {
+                $timestamp = time();
+            }
+
+            $interval_seconds = $interval_minutes * 60;
+            return ceil( $timestamp / $interval_seconds ) * $interval_seconds;
+        }
+        public function get_next_ceil_time( int $interval_minutes, int $timestamp = 0 ): string
+        {
+            return date('Y-m-d H:i:s', $this->get_next_ceil_timestamp( $interval_minutes, $timestamp ) );
+        }
 
 	}
 }
