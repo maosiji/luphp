@@ -59,7 +59,7 @@ if ( !class_exists('LUSession') ) {
                 if (session_status() === PHP_SESSION_NONE) {
                     session_start();
                     // ✅ 安全增强：启动后重新生成 Session ID，防止 Session Fixation
-                    session_regenerate_id(true); // 只在首次启动时再生 ID
+//                    session_regenerate_id(true); // 只在首次启动时再生 ID
                     $this->started = true;
                 }
             }
