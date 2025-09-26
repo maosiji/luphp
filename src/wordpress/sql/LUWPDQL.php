@@ -150,10 +150,10 @@ if ( !class_exists('LUWPDQL') ) {
             $table_name = $wpdb->prefix . $tableNameNoPrefix;
             if ( $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") == $table_name ) {
 
-                if ( empty($whereSQL) && empty($whereValue) ) {
+                if ( empty($whereValue) ) {
                     $return = $wpdb->get_results( "SELECT " . $cols . " FROM " . $table_name, $output );
                 }
-                if ( !empty($whereSQL) && !empty($whereValue) ) {
+                if ( !empty($whereValue) ) {
                     $return = $wpdb->get_results($wpdb->prepare("SELECT " . $cols . " FROM " . $table_name . $whereSQL, ...$whereValue), $output);
                 }
 

@@ -341,7 +341,7 @@ if ( !class_exists('LUWPDBSQL') ) {
             $orderSort = $orderSortVerify['data'];
 
             $whereSQL = '';
-            $whereValue = '';
+            $whereValue = [];
             if ( !empty($whereParam) || !empty($whereFormat) || !empty($whereCompare) ) {
                 // 检测 where 输入是否正确
                 $whereVerify = $this->verify('where', array(
@@ -355,7 +355,7 @@ if ( !class_exists('LUWPDBSQL') ) {
 
                 $where = $this->generate_where_sql( $whereParam, $whereCompare, $whereFormat );
                 $whereSQL = $where['sql'];
-                $whereValue = $where['value'];
+                $whereValue[] = $where['value'];
             }
 
             // 编写 orderby 语句
