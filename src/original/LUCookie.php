@@ -182,7 +182,7 @@ if ( !class_exists('LUCookie') ) {
             $full_key = $this->prefix . $key;
 
             // 如果 Cookie 不存在，直接返回 null
-            if (!isset($_COOKIE[$full_key])) return null;
+            if (!isset($_COOKIE[$full_key])) return false;
 
             // 如果未传入当前时间，使用服务器时间
             $current_timestamp = $current_timestamp > 0 ? $current_timestamp : time();
@@ -199,7 +199,7 @@ if ( !class_exists('LUCookie') ) {
                 // 检查是否过期
                 if ($data['expire'] > 0 && $current_timestamp > $data['expire']) {
                     $this->delete($key); // 自动清理过期 Cookie
-                    return null;
+                    return false;
                 }
 
                 // 解码用户数据并返回
@@ -214,7 +214,7 @@ if ( !class_exists('LUCookie') ) {
                 // 数据损坏，清理并记录日志
                 $this->delete($key);
                 error_log("LUCookie::get() failed to decode cookie '$key': " . $e->getMessage());
-                return null;
+                return false;
             }
         }
 
@@ -238,7 +238,7 @@ if ( !class_exists('LUCookie') ) {
          */
         public function getMeta($key, $current_timestamp = 0) {
             $full_key = $this->prefix . $key;
-            if (!isset($_COOKIE[$full_key])) return null;
+            if (!isset($_COOKIE[$full_key])) return false;
 
             $current_timestamp = $current_timestamp > 0 ? $current_timestamp : time();
 
@@ -252,7 +252,7 @@ if ( !class_exists('LUCookie') ) {
                 // 检查过期
                 if ($data['expire'] > 0 && $current_timestamp > $data['expire']) {
                     $this->delete($key);
-                    return null;
+                    return false;
                 }
 
                 // 解码用户值
@@ -272,7 +272,7 @@ if ( !class_exists('LUCookie') ) {
             } catch (\Exception $e) {
                 $this->delete($key);
                 error_log("LUCookie::getMeta() failed for '$key': " . $e->getMessage());
-                return null;
+                return false;
             }
         }
 

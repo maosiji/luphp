@@ -87,7 +87,7 @@ if ( !class_exists('LUSession') ) {
         public function get(string $key, int $current_timestamp=0) {
 
             $full_key = $this->prefix . $key;
-            if (!isset($_SESSION[$full_key])) return null;
+            if (!isset($_SESSION[$full_key])) return false;
 
             $data = $_SESSION[$full_key];
             $current_timestamp = $current_timestamp>0 ? $current_timestamp : time();
@@ -95,7 +95,7 @@ if ( !class_exists('LUSession') ) {
             // 检查是否过期
             if ($data['expire'] > 0 && $current_timestamp > $data['expire']) {
                 unset($_SESSION[$full_key]);
-                return null;
+                return false;
             }
 
             return json_decode($data['value'], true);
@@ -104,7 +104,7 @@ if ( !class_exists('LUSession') ) {
         public function getMeta(string $key, int $current_timestamp=0) {
 
             $full_key = $this->prefix . $key;
-            if (!isset($_SESSION[$full_key])) return null;
+            if (!isset($_SESSION[$full_key])) return false;
 
             $data = $_SESSION[$full_key];
             $current_timestamp = $current_timestamp>0 ? $current_timestamp : time();
@@ -112,7 +112,7 @@ if ( !class_exists('LUSession') ) {
             // 检查是否过期
             if ($data['expire'] > 0 && $current_timestamp > $data['expire']) {
                 unset($_SESSION[$full_key]);
-                return null;
+                return false;
             }
 
             return [
