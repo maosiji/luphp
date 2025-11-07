@@ -4,29 +4,32 @@
  * url                  : maosiji.com
  * email                : code@maosiji.cn
  * date                 : 2024-09-30 12:26
- * update               :
+ * update               : 2025-11-07 — 移除 $current_timestamp，仅用 time()，兼容 PHP 7.0+
  * project              : luphp
- * description          :
+ * description          : 安全、带过期机制的 Session 封装类（PHP 7.0+ 兼容）
  */
 
 namespace MAOSIJI\LU;
-//session_start();
 
-if ( !class_exists('LUSession') ) {
+if (!class_exists('LUSession')) {
     class LUSession {
 
-        private static $instance = null; // 静态实例
+        private static $instance = null;
         private $prefix = 'maosiji_lu_';
         private $started = false;
+
         private function __construct() {
             $this->start();
         }
-        private function __clone()
-        {
 
-        }
+        private function __clone() {}
 
-        public static function getInstance(): self {
+        /**
+         * 获取单例实例
+         *
+         * @return LUSession
+         */
+        public static function getInstance() {
             if (self::$instance === null) {
                 self::$instance = new self();
             }
@@ -34,121 +37,137 @@ if ( !class_exists('LUSession') ) {
         }
 
         /**
-         * 安全启动 Session（在 init 钩子后调用）
-         *
-         * @return void
+         * 安全启动 Session
          */
         private function start() {
-
-            if ( !$this->started ) {
-
-                // ✅ 禁止通过 URL 传递 Session ID，防止嗅探、劫持
-                ini_set('session.use_only_cookies', 1);
-
-                // ✅ 防止 JavaScript 通过 document.cookie获取 Session ID，防 XSS 攻击窃取
-                ini_set('session.cookie_httponly', 1);
-
-                // ✅ 仅通过 HTTPS 传输 Cookie，防止中间人攻击（如 HTTP 明文传输）
-                if ( (new LUUrl())->is_https() ) {
-                    ini_set('session.cookie_secure', 1); // 仅在 HTTPS 下启用
-                }
-
-                // 实现跨子域共享 Session
-    //            ini_set('session.cookie_domain', '.example.com');
-
-                if (session_status() === PHP_SESSION_NONE) {
-                    session_start();
-                    // ✅ 安全增强：启动后重新生成 Session ID，防止 Session Fixation
-//                    session_regenerate_id(true); // 只在首次启动时再生 ID
-                    $this->started = true;
-                }
+            if ($this->started || session_status() !== PHP_SESSION_NONE) {
+                $this->started = true;
+                return;
             }
+
+            // 安全配置
+            ini_set('session.use_only_cookies', '1');
+            ini_set('session.cookie_httponly', '1');
+
+            if ((new LUUrl())->is_https()) {
+                ini_set('session.cookie_secure', '1');
+            }
+
+            session_start();
+            $this->started = true;
         }
 
         /**
-         * 设置
+         * 设置带过期时间的 Session 值
+         *
          * @param string $key
          * @param string $value
-         * @param int $expire   :存在时长，单位 秒
-         * @param int $current_timestamp :当前时间戳，若不传入，则默认使用 time()
-         * @return
+         * @param int    $expire 秒数，0 表示永不过期
+         * @return array
          */
-        public function set(string $key, string $value, int $expire=0, int $current_timestamp=0) {
-
-            $current_timestamp = $current_timestamp>0 ? $current_timestamp : time();
-
-            return $_SESSION[$this->prefix . $key] = [
-                'value' => json_encode($value),
+        public function set($key, $value, $expire = 0) {
+            $current_timestamp = time();
+            return $_SESSION[$this->prefix . $key] = array(
+                'value' => $value,
                 'expire' => $expire > 0 ? $current_timestamp + $expire : 0,
                 'set_at' => $current_timestamp
-            ];
+            );
         }
 
-        public function get(string $key, int $current_timestamp=0) {
-
+        /**
+         * 获取值（自动清理过期项）
+         *
+         * @param string $key
+         * @return mixed false on not found or expired, string value otherwise
+         */
+        public function get($key) {
             $full_key = $this->prefix . $key;
-            if (!isset($_SESSION[$full_key])) return false;
+            if (!isset($_SESSION[$full_key])) {
+                return false;
+            }
 
             $data = $_SESSION[$full_key];
-            $current_timestamp = $current_timestamp>0 ? $current_timestamp : time();
+            $current_timestamp = time();
 
-            // 检查是否过期
             if ($data['expire'] > 0 && $current_timestamp > $data['expire']) {
                 unset($_SESSION[$full_key]);
                 return false;
             }
 
-            return json_decode($data['value'], true);
+            return $data['value'];
         }
 
-        public function getMeta(string $key, int $current_timestamp=0) {
-
+        /**
+         * 获取元数据（含过期时间、设置时间等）
+         *
+         * @param string $key
+         * @return array|false
+         */
+        public function getMeta($key) {
             $full_key = $this->prefix . $key;
-            if (!isset($_SESSION[$full_key])) return false;
+            if (!isset($_SESSION[$full_key])) {
+                return false;
+            }
 
             $data = $_SESSION[$full_key];
-            $current_timestamp = $current_timestamp>0 ? $current_timestamp : time();
+            $current_timestamp = time();
 
-            // 检查是否过期
             if ($data['expire'] > 0 && $current_timestamp > $data['expire']) {
                 unset($_SESSION[$full_key]);
                 return false;
             }
 
-            return [
-                'value' => json_decode($data['value'], true),
-                'expire' => $data['expire'],
-                'set_at' => $data['set_at'],
-                'age' => $current_timestamp - $data['set_at'], // 已存在多少秒
-            ];
+            return array(
+                'value'     => $data['value'],
+                'expire'    => $data['expire'],
+                'set_at'    => $data['set_at'],
+                'age'       => $current_timestamp - $data['set_at'],
+            );
         }
 
-        public function check(string $key, string $value): bool {
+        /**
+         * 检查键值是否匹配
+         *
+         * @param string $key
+         * @param string $value
+         * @return bool
+         */
+        public function check($key, $value) {
             return $this->get($key) === $value;
         }
 
-        public function delete(string $key): bool {
-
+        /**
+         * 删除单个键
+         *
+         * @param string $key
+         * @return bool
+         */
+        public function delete($key) {
             $full_key = $this->prefix . $key;
             if (isset($_SESSION[$full_key])) {
                 unset($_SESSION[$full_key]);
                 return true;
             }
-
             return false;
         }
 
         /**
-         * 清理所有过期 Session 项（可选定时调用）
+         * 垃圾回收：清理当前会话中所有过期项
+         * 20% 概率执行（性能优化）
          */
-        public function gc( int $current_timestamp=0 ) {
+        public function gc() {
+            if (mt_rand(1, 100) > 20) {
+                return;
+            }
 
-            if ( mt_rand(1, 100)>20 ) return;
-
-            $current_timestamp = $current_timestamp>0 ? $current_timestamp : time();
-
+            $current_timestamp = time();
             foreach ($_SESSION as $key => $data) {
-                if (strpos($key, $this->prefix) === 0 && is_array($data) && isset($data['expire'])) {
+                if (
+                    is_string($key) &&
+                    strpos($key, $this->prefix) === 0 &&
+                    is_array($data) &&
+                    isset($data['expire'])
+                ) {
                     if ($data['expire'] > 0 && $current_timestamp > $data['expire']) {
                         unset($_SESSION[$key]);
                     }
@@ -157,38 +176,27 @@ if ( !class_exists('LUSession') ) {
         }
 
         /**
-         * 销毁整个 Session（用于用户退出登录）
+         * 销毁整个会话（退出登录时调用）
+         *
+         * @return bool
          */
-        public function destroy(): bool {
+        public function destroy() {
             if (session_status() === PHP_SESSION_ACTIVE) {
-                $_SESSION = []; // 清空内存数据
-                session_destroy(); // 删除服务器端 Session 文件
+                $_SESSION = array();
+                session_destroy();
+                $this->started = false;
                 return true;
             }
             return false;
         }
 
-        public function get_session_id()
-        {
+        /**
+         * 获取当前 Session ID
+         *
+         * @return string
+         */
+        public function get_session_id() {
             return session_id();
         }
-
-
-
-
     }
 }
-
-// 在插件主文件或 functions.php
-// 只执行一次
-//add_action('init', function() {
-//    static $registered = false;
-//    if ($registered) return;
-//    $registered = true;
-//
-//    $session = \MAOSIJI\LU\LUSession::getInstance();
-//    $wp_now = current_time('timestamp');
-//    add_action('shutdown', function() use ($session, $wp_now) {
-//        $session->gc($wp_now);
-//    });
-//});
