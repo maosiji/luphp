@@ -3,33 +3,59 @@
  * author               : 猫斯基
  * url                  : maosiji.com
  * email                : code@maosiji.cn
- * date                 : 2024-09-30 12:26
- * update               : 2025-11-07 — 移除 $current_timestamp，仅用 time()，兼容 PHP 7.0+
+ * date                 : 2024-09-30
+ * update               : 2025-11-08 — 兼容 PHP 7.0+
  * project              : luphp
- * description          : 安全、带过期机制的 Session 封装类（PHP 7.0+ 兼容）
+ * description          : 安全、轻量的 Session 启动与管理工具类（兼容 PHP 7.0+）
  */
 
 namespace MAOSIJI\LU;
 
 if (!class_exists('LUSession')) {
-    class LUSession {
-
+    /**
+     * LUSession - 安全封装 PHP 原生 Session 的单例工具类
+     *
+     * 功能：
+     * - 自动安全配置 Session（仅 Cookie、HttpOnly、Secure 等）
+     * - 统一设置合理的过期策略（服务端 + 客户端）
+     * - 提供会话销毁、ID 重生成等安全操作
+     *
+     * 使用说明：
+     * - 本类不修改 $_SESSION 结构，用户可直接操作原生 Session
+     * - 推荐在应用初始化阶段调用 getInstance() 确保 Session 启动
+     */
+    class LUSession
+    {
+        /** @var LUSession|null 单例实例 */
         private static $instance = null;
-        private $prefix = 'maosiji_lu_';
+
+        /** @var bool 标记 Session 是否已启动 */
         private $started = false;
 
-        private function __construct() {
+        /**
+         * 私有构造函数，确保只能通过 getInstance() 创建实例
+         */
+        private function __construct()
+        {
             $this->start();
         }
 
-        private function __clone() {}
+        /**
+         * 禁止克隆实例
+         */
+        private function __clone()
+        {
+        }
 
         /**
-         * 获取单例实例
+         * 获取 LUSession 单例实例
          *
-         * @return LUSession
+         * 首次调用时会自动启动并安全配置 Session。
+         *
+         * @return self
          */
-        public static function getInstance() {
+        public static function getInstance()
+        {
             if (self::$instance === null) {
                 self::$instance = new self();
             }
@@ -37,166 +63,143 @@ if (!class_exists('LUSession')) {
         }
 
         /**
-         * 安全启动 Session
+         * 安全启动 Session（幂等操作）
+         *
+         * - 仅当 Session 未启动时执行初始化
+         * - 自动检测 HTTPS 并设置 secure Cookie
+         * - 设置服务端 GC 过期时间为 2 小时（7200 秒）
+         * - 设置客户端 Cookie 生命周期为 2 小时
+         *
+         * @return void
          */
-        private function start() {
-            if ($this->started || session_status() !== PHP_SESSION_NONE) {
+        private function start()
+        {
+            if ($this->started || session_status() === PHP_SESSION_ACTIVE) {
                 $this->started = true;
                 return;
             }
 
-            // 安全配置
+            // 强制 Session ID 仅通过 Cookie 传递（防止 URL 泄露）
             ini_set('session.use_only_cookies', '1');
+
+            // 设置 HttpOnly，防止 XSS 窃取 Cookie
             ini_set('session.cookie_httponly', '1');
 
-            if ((new LUUrl())->is_https()) {
+            // 若当前连接为 HTTPS，则启用 Secure Cookie
+            $isHttps = (new LUUrl())->is_https();
+            if ($isHttps) {
                 ini_set('session.cookie_secure', '1');
             }
 
+            // 设置服务端 Session 数据最大存活时间（2 小时）
+            // 不设置，浏览器关闭时，session失效
+//            ini_set('session.gc_maxlifetime', '7200');
+
+            // 兼容 PHP 7.0–7.2：session_set_cookie_params 不支持数组参数
+            // 函数签名：session_set_cookie_params(lifetime, path, domain, secure, httponly)
+            session_set_cookie_params(
+                7200,           // lifetime
+                '/',            // path（建议设为根路径）
+                '',             // domain（留空表示当前域）
+                $isHttps,       // secure
+                true            // httponly
+            // 注意：samesite 无法在 PHP < 7.3 中通过此函数设置
+            );
+
+            // 启动 Session
             session_start();
             $this->started = true;
         }
 
         /**
-         * 设置带过期时间的 Session 值
+         * 销毁当前会话（常用于用户登出）
          *
-         * @param string $key
-         * @param string $value
-         * @param int    $expire 秒数，0 表示永不过期
-         * @return array
-         */
-        public function set($key, $value, $expire = 0) {
-            $current_timestamp = time();
-            return $_SESSION[$this->prefix . $key] = array(
-                'value' => $value,
-                'expire' => $expire > 0 ? $current_timestamp + $expire : 0,
-                'set_at' => $current_timestamp
-            );
-        }
-
-        /**
-         * 获取值（自动清理过期项）
+         * - 清空 $_SESSION 数组
+         * - 删除服务器端 Session 文件
+         * - 重置内部状态标记
          *
-         * @param string $key
-         * @return mixed false on not found or expired, string value otherwise
+         * @return bool 成功返回 true，若 Session 未激活则返回 false
          */
-        public function get($key) {
-            $full_key = $this->prefix . $key;
-            if (!isset($_SESSION[$full_key])) {
+        public function destroy()
+        {
+            if (session_status() !== PHP_SESSION_ACTIVE) {
                 return false;
             }
 
-            $data = $_SESSION[$full_key];
-            $current_timestamp = time();
+            // 清空所有 Session 数据
+            $_SESSION = [];
 
-            if ($data['expire'] > 0 && $current_timestamp > $data['expire']) {
-                unset($_SESSION[$full_key]);
-                return false;
-            }
+            // 销毁服务器端 Session
+            session_destroy();
 
-            return $data['value'];
+            // 重置状态
+            $this->started = false;
+
+            return true;
         }
 
         /**
-         * 获取元数据（含过期时间、设置时间等）
+         * 重新生成 Session ID（防范 Session Fixation 攻击）
          *
-         * @param string $key
-         * @return array|false
-         */
-        public function getMeta($key) {
-            $full_key = $this->prefix . $key;
-            if (!isset($_SESSION[$full_key])) {
-                return false;
-            }
-
-            $data = $_SESSION[$full_key];
-            $current_timestamp = time();
-
-            if ($data['expire'] > 0 && $current_timestamp > $data['expire']) {
-                unset($_SESSION[$full_key]);
-                return false;
-            }
-
-            return array(
-                'value'     => $data['value'],
-                'expire'    => $data['expire'],
-                'set_at'    => $data['set_at'],
-                'age'       => $current_timestamp - $data['set_at'],
-            );
-        }
-
-        /**
-         * 检查键值是否匹配
+         * 建议在用户登录成功后调用此方法。
          *
-         * @param string $key
-         * @param string $value
-         * @return bool
+         * @param bool $deleteOld 是否删除旧的 Session 文件（默认 true）
+         * @return void
          */
-        public function check($key, $value) {
-            return $this->get($key) === $value;
-        }
-
-        /**
-         * 删除单个键
-         *
-         * @param string $key
-         * @return bool
-         */
-        public function delete($key) {
-            $full_key = $this->prefix . $key;
-            if (isset($_SESSION[$full_key])) {
-                unset($_SESSION[$full_key]);
-                return true;
+        public function regenerate_id($deleteOld = true)
+        {
+            if ($this->started) {
+                session_regenerate_id($deleteOld);
             }
-            return false;
-        }
-
-        /**
-         * 垃圾回收：清理当前会话中所有过期项
-         * 20% 概率执行（性能优化）
-         */
-        public function gc() {
-            if (mt_rand(1, 100) > 20) {
-                return;
-            }
-
-            $current_timestamp = time();
-            foreach ($_SESSION as $key => $data) {
-                if (
-                    is_string($key) &&
-                    strpos($key, $this->prefix) === 0 &&
-                    is_array($data) &&
-                    isset($data['expire'])
-                ) {
-                    if ($data['expire'] > 0 && $current_timestamp > $data['expire']) {
-                        unset($_SESSION[$key]);
-                    }
-                }
-            }
-        }
-
-        /**
-         * 销毁整个会话（退出登录时调用）
-         *
-         * @return bool
-         */
-        public function destroy() {
-            if (session_status() === PHP_SESSION_ACTIVE) {
-                $_SESSION = array();
-                session_destroy();
-                $this->started = false;
-                return true;
-            }
-            return false;
         }
 
         /**
          * 获取当前 Session ID
          *
-         * @return string
+         * 注意：必须在 Session 已启动后调用，否则返回空字符串。
+         *
+         * @return string 当前会话 ID（如 "abc123def456"）
          */
-        public function get_session_id() {
+        public function get_id()
+        {
             return session_id();
         }
+
+        /**
+         * 用户超过xx分钟没有活动，销毁
+         *
+         * @param int $expire_seconds :活动时间间隔
+         *
+         * */
+        public function activity_destroy( int $expire_seconds )
+        {
+            // 每个页面顶部检查
+            if (isset($_SESSION['maosiji_lu_last_activity']) && (time() - $_SESSION['maosiji_lu_last_activity']) > $expire_seconds) {
+                $this->destroy();
+                exit;
+            }
+
+            $_SESSION['maosiji_lu_last_activity'] = time(); // 更新活跃时间
+        }
+
+
+
     }
 }
+
+/*
+ * 若是 WordPress 程序，放入以下代码保证执行 session
+ * */
+//add_action('init', function () {
+//    // 防止重复初始化（虽然 LUSession 是单例，但双重保险）
+//    static $session_started = false;
+//    if ($session_started) {
+//        return;
+//    }
+//
+//    // 启动安全 Session
+//    LUSession::getInstance();
+//
+//    $session_started = true;
+//}, 1);
+

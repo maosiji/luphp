@@ -17,7 +17,6 @@ if (!class_exists('LUCookie')) {
 
         private static $instance = null;
         private $prefix = 'maosiji_lu_';
-        private $default_expire = 3600;
         private $path = '/';
         private $domain = '';
         private $secure = false;
