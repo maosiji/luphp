@@ -28,7 +28,6 @@ if (!class_exists('LURandom')) {
         {
         }
 
-
         /**
          * 生成指定长度的随机数字字符串
          *
