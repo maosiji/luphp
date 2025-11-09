@@ -29,6 +29,42 @@ if (!class_exists('LURandom')) {
         }
 
         /**
+         * 生成仅含 [a-zA-Z0-9] 的高熵唯一 字符串
+         *
+         * 随机性质量：完全均匀
+         * 性能：接近最优
+         * 安全标准：符合最高标准
+         *
+         * @param int $length 生成长度（不含前缀）
+         * @return string 格式：state_xxx...
+         */
+        public function generate_secure_str( int $length = 32 ) {
+            $pool = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            $state = '';
+            $bytes = random_bytes($length + 10); // 多取一点，避免重试
+            $i = 0;
+            $maxByte = 248; // floor(256 / 62) * 62 = 4 * 62 = 248
+
+            while (strlen($state) < $length) {
+                if ($i >= strlen($bytes)) {
+                    // 极端情况：补充新随机字节
+                    $bytes = random_bytes($length);
+                    $i = 0;
+                }
+
+                $byte = ord($bytes[$i]);
+                $i++;
+
+                if ($byte < $maxByte) {
+                    $state .= $pool[$byte % 62];
+                }
+                // 否则丢弃该字节（拒绝采样），继续下一轮
+            }
+
+            return $state;
+        }
+
+        /**
          * 生成指定长度的随机数字字符串
          *
          * @param int $length 随机数长度
