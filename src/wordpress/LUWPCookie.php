@@ -10,6 +10,7 @@
  */
 
 namespace MAOSIJI\LU\WP;
+use MAOSIJI\LU\LUEncryptor;
 use MAOSIJI\LU\LURandom;
 
 if ( ! defined( 'ABSPATH' ) ) { die; }
@@ -26,6 +27,7 @@ if (!class_exists('LUWPCookie')) {
 
         private $cookie_name;
         private $default_expire_seconds;
+        private $default_encrypt_key;
 
         /**
          * 构造函数：允许自定义 Cookie 名和默认过期时间
@@ -33,9 +35,10 @@ if (!class_exists('LUWPCookie')) {
          * @param string $cookie_name Cookie 名称（必须唯一，避免冲突）
          * @param int    $default_expire 默认过期时间（秒）
          */
-        public function __construct( string $cookie_name, int $default_expire_seconds = 300 ) {
+        public function __construct( string $cookie_name, int $default_expire_seconds = 300, string $default_encrypt_key = 'kdkdieror596kfgkg96kf' ) {
             $this->cookie_name = $cookie_name;
             $this->default_expire_seconds = $default_expire_seconds;
+            $this->default_encrypt_key = $default_encrypt_key;
         }
 
         /**
@@ -43,13 +46,15 @@ if (!class_exists('LUWPCookie')) {
          *
          * @param string $value_prefix 前缀
          * @param int $state_length 值长度（不包含前缀的）
+         * @param string $encrypt_key 加密的 key
          * @param int|null $expire_seconds 有效期（秒），null 表示使用默认值
          * @return string 字符串
          */
-        public function get_or_create_encrypted_value_and_set( string $value_prefix, int $value_length=10, int $expire_seconds = null ) {
+        public function get_or_create_encrypted_value_and_set( string $value_prefix, int $value_length=10, string $encrypt_key=null, int $expire_seconds = null ) {
 
             $expire = $expire_seconds !== null ? $expire_seconds : $this->default_expire_seconds;
-            $existing = $this->_get_existing_encrypted_value();
+            $e_key = $encrypt_key !== null ? $encrypt_key : $this->default_encrypt_key;
+            $existing = $this->_get_existing_encrypted_value( $e_key );
 
             if ($existing !== false) {
                 return $existing;
@@ -60,7 +65,7 @@ if (!class_exists('LUWPCookie')) {
             $data = json_encode(array($new_value, time()));
 
             // 加密并写入 Cookie
-            $encrypted = base64_encode(wp_encrypt($data, AUTH_KEY));
+            $encrypted = (new LUEncryptor($e_key))->encrypt($data);
             setcookie(
                 $this->cookie_name,
                 $encrypted,
@@ -83,9 +88,11 @@ if (!class_exists('LUWPCookie')) {
          * @param string $input_state 来自回调 URL 的 state
          * @return bool 是否验证通过
          */
-        public function verify_and_destroy_encrypted_value( string $input_state ) {
+        public function verify_and_destroy_encrypted_value( string $input_state, string $encrypt_key=null ) {
 
-            $existing = $this->_get_existing_encrypted_value();
+            $e_key = $encrypt_key !== null ? $encrypt_key : $this->default_encrypt_key;
+
+            $existing = $this->_get_existing_encrypted_value( $e_key );
             if ($existing === false) {
                 return false;
             }
@@ -100,20 +107,14 @@ if (!class_exists('LUWPCookie')) {
          *
          * @return string|false 明文 state 或 false
          */
-        private function _get_existing_encrypted_value() {
+        private function _get_existing_encrypted_value( string $encrypt_key=null ) {
 
             if (!isset($_COOKIE[$this->cookie_name])) {
                 return false;
             }
 
             $encrypted = $_COOKIE[$this->cookie_name];
-            $raw = base64_decode($encrypted, true);
-            if ($raw === false) {
-                $this->_destroy_encrypted_value();
-                return false;
-            }
-
-            $data = wp_decrypt($raw, AUTH_KEY);
+            $data = (new LUEncryptor($encrypt_key))->decrypt($encrypted);
             if (!$data) {
                 $this->_destroy_encrypted_value();
                 return false;
@@ -131,7 +132,7 @@ if (!class_exists('LUWPCookie')) {
                 return false;
             }
 
-            if (time() - (int)$timestamp > $this->default_expire) {
+            if (time() - (int)$timestamp > $this->default_expire_seconds) {
                 $this->_destroy_encrypted_value();
                 return false;
             }
