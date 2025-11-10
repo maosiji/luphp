@@ -47,13 +47,23 @@ if (!class_exists('LUWPCookie')) {
          * @param string $value_prefix 前缀
          * @param int $state_length 值长度（不包含前缀的）
          * @param string $encrypt_key 加密的 key
-         * @param int|null $expire_seconds 有效期（秒），null 表示使用默认值
+         * @param $expire_seconds :有效期（秒），null 表示使用默认值
          * @return string 字符串
          */
-        public function get_or_create_encrypted_value_and_set( string $value_prefix, int $value_length=10, string $encrypt_key=null, int $expire_seconds = null ) {
+        public function get_or_create_encrypted_value_and_set( string $value_prefix, int $value_length=10, string $encrypt_key='', $expire_seconds=null ) {
 
-            $expire = $expire_seconds !== null ? $expire_seconds : $this->default_expire_seconds;
-            $e_key = $encrypt_key !== null ? $encrypt_key : $this->default_encrypt_key;
+            if ($expire_seconds === null) {
+                // 使用默认过期时间
+                $expire = time() + $this->default_expire_seconds;
+            } elseif ($expire_seconds === 0) {
+                // 会话 Cookie
+                $expire = 0;
+            } else {
+                // 自定义过期时间（正整数）
+                $expire = time() + $expire_seconds;
+            }
+
+            $e_key = $encrypt_key !== '' ? $encrypt_key : $this->default_encrypt_key;
             $existing = $this->_get_existing_encrypted_value( $e_key );
 
             if ($existing !== false) {
@@ -69,7 +79,7 @@ if (!class_exists('LUWPCookie')) {
             setcookie(
                 $this->cookie_name,
                 $encrypted,
-                time() + $expire,
+                $expire,
                 '/',
                 '',
                 is_ssl(),
@@ -86,11 +96,12 @@ if (!class_exists('LUWPCookie')) {
          * 验证一次（不管是否成功）都会消除 唯一值（用于 OAuth 回调）
          *
          * @param string $input_state 来自回调 URL 的 state
+         * @param string $encrypt_key
          * @return bool 是否验证通过
          */
-        public function verify_and_destroy_encrypted_value( string $input_state, string $encrypt_key=null ) {
+        public function verify_and_destroy_encrypted_value( string $input_state, string $encrypt_key='' ) {
 
-            $e_key = $encrypt_key !== null ? $encrypt_key : $this->default_encrypt_key;
+            $e_key = $encrypt_key !== '' ? $encrypt_key : $this->default_encrypt_key;
 
             $existing = $this->_get_existing_encrypted_value( $e_key );
             if ($existing === false) {
@@ -107,7 +118,7 @@ if (!class_exists('LUWPCookie')) {
          *
          * @return string|false 明文 state 或 false
          */
-        private function _get_existing_encrypted_value( string $encrypt_key=null ) {
+        private function _get_existing_encrypted_value( string $encrypt_key='' ) {
 
             if (!isset($_COOKIE[$this->cookie_name])) {
                 return false;
