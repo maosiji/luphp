@@ -114,6 +114,40 @@ if (!class_exists('LUWPCookie')) {
         }
 
         /**
+         * 根据加密的 Cookie 值解密并验证有效期，返回原始 value 或 false
+         *
+         * @param string $encrypted_data 加密后的 Cookie 字符串
+         * @param string $encrypt_key    可选解密密钥，为空则使用默认
+         * @return string|false 成功且未过期返回 state，否则 false
+         */
+        public function get_value_from_encrypted_data( string $encrypted_data, string $encrypt_key = '' ) {
+            $e_key = $encrypt_key !== '' ? $encrypt_key : $this->default_encrypt_key;
+
+            $data = (new LUEncryptor($e_key))->decrypt($encrypted_data);
+            if (!$data) {
+                return false;
+            }
+
+            $parsed = json_decode($data, true);
+            if (!is_array($parsed) || count($parsed) !== 2) {
+                return false;
+            }
+
+            list($state, $timestamp) = $parsed;
+            if (!$state || !is_numeric($timestamp)) {
+                return false;
+            }
+
+            $timestamp = (int)$timestamp;
+            // 检查是否过期：使用当前实例的 default_expire_seconds
+            if (time() - $timestamp > $this->default_expire_seconds) {
+                return false;
+            }
+
+            return $state;
+        }
+
+        /**
          * 从 Cookie 中读取、解密、验证是否过期
          *
          * @return string|false 明文 state 或 false
