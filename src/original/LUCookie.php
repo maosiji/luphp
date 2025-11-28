@@ -16,29 +16,222 @@ if (!class_exists('LUCookie')) {
     class LUCookie {
 
         private static $instance = null;
-        private $prefix = 'maosiji_lu_';
+        private $prefix;
         private $path = '/';
-        private $domain = '';
-        private $secure = false;
+        private $domain;
+        private $secure;
         private $httponly = true;
         private $samesite = 'Lax';
 
-        private function __construct($custom_domain = null) {
+        private function __construct( string $prefix, string $custom_domain ) {
+
             $this->secure = (new LUUrl())->is_https();
-            $this->domain = $this->getCurrentDomain($custom_domain);
+            $this->domain = $this->getCurrentDomain( $custom_domain );
+            $this->prefix = $prefix;
         }
 
         private function __clone() {}
 
-        public static function getInstance($custom_domain = null) {
+        /**
+         *
+         * @param string $default_encrypt_key:数据加密的key
+         * @param string $prefix:cookie的前缀
+         * @param string $custom_domain
+         * @return self|null
+         */
+        public static function getInstance( string $prefix='maosiji_lu_cookie_', string $custom_domain='' ) {
+
             if (self::$instance === null) {
-                self::$instance = new self($custom_domain);
+                self::$instance = new self( $prefix, $custom_domain );
             }
+
             return self::$instance;
         }
 
-        private function getCurrentDomain($custom_domain = null) {
-            if ($custom_domain !== null && is_string($custom_domain) && $custom_domain !== '') {
+        /**
+         * 设置 cookie
+         * @param string $key
+         * @param string $value
+         * @param int $expire_seconds : 过期秒数，默认 300
+         * @return bool
+         */
+        public function set( string $key, string $value, int $expire_seconds=300 ) {
+
+            $current_timestamp = time();
+            $full_key = $this->prefix . $key;
+            $expire_time = $expire_seconds > 0 ? $current_timestamp + $expire_seconds : 0;
+
+            // PHP 的原生 setcookie() 虽然也支持设置过期时间，客户端可以篡改 Cookie（比如修改过期时间）
+            $cookie_data = array(
+                'value'  => $value,
+                'expire' => $expire_time,
+                'set_at' => $current_timestamp
+            );
+
+            $encoded_value = $this->_encode_data($cookie_data);
+
+            $set = $this->_setCookieCompat(
+                $full_key,
+                $encoded_value,
+                $expire_time,
+                $this->path,
+                $this->domain,
+                $this->secure,
+                $this->httponly,
+                $this->samesite
+            );
+
+            if ( $set ) {
+                $_COOKIE[$full_key] = $encoded_value;
+            }
+
+            return $set;
+        }
+
+        /**
+         * 根据 key 获取 cookie 的值
+         * @param string $key
+         * @return false|mixed
+         */
+        public function get( string $key ) {
+
+            $full_key = $this->prefix . $key;
+            if (!isset($_COOKIE[$full_key])) {
+                return false;
+            }
+
+            $current_timestamp = time();
+
+            try {
+                $data = $this->_decode_data($_COOKIE[$full_key]);
+                if ($data === null) {
+                    throw new \Exception('Invalid cookie structure');
+                }
+
+                if ($data['expire'] > 0 && $current_timestamp > $data['expire']) {
+                    $this->delete($key);
+                    return false;
+                }
+
+                return $data['value'];
+
+            } catch (\Exception $e) {
+                $this->delete($key);
+                error_log("LUCookie::get() failed to decode cookie '$key': " . $e->getMessage());
+                return false;
+            }
+        }
+
+        /**
+         * 根据 key 获取 cookie 的所有信息
+         * @param string $key
+         * @return array|false
+         */
+        public function get_meta( string $key ) {
+
+            $full_key = $this->prefix . $key;
+            if (!isset($_COOKIE[$full_key])) {
+                return false;
+            }
+
+            $current_timestamp = time();
+
+            try {
+                $data = $this->_decode_data($_COOKIE[$full_key]);
+                if ($data === null) {
+                    throw new \Exception('Invalid cookie structure');
+                }
+
+                if ($data['expire'] > 0 && $current_timestamp > $data['expire']) {
+                    $this->delete($key);
+                    return false;
+                }
+
+                return array(
+                    'value' => $data['value'],
+                    'expire' => $data['expire'],
+                    'set_at' => $data['set_at'],
+                    'age' => $current_timestamp - $data['set_at'],
+                );
+
+            } catch (\Exception $e) {
+                $this->delete($key);
+                error_log("LUCookie::getMeta() failed for '$key': " . $e->getMessage());
+                return false;
+            }
+        }
+
+        /**
+         * 检查某个 cookie 是否存在
+         * @param string $key
+         * @param string $value
+         * @param bool $is_delete :核查后是否立即删除
+         * @return bool
+         */
+        public function check( string $key, string $value, bool $is_delete=false ) {
+
+            $return = false;
+            $full_key = $this->prefix . $key;
+
+            if ( hash_equals( $this->get($full_key), $value ) ) {
+                $return = true;
+            }
+            if ( $is_delete ) {
+                $this->delete($key);
+            }
+
+            return $return;
+        }
+
+        /**
+         * 根据 key 删除某个 cookie
+         *
+         * @param string $key
+         * @return bool
+         */
+        public function delete( string $key ) {
+
+            $full_key = $this->prefix . $key;
+
+            unset($_COOKIE[$full_key]);
+
+            return $this->_setCookieCompat(
+                $full_key,
+                '',
+                time() - 3600,
+                $this->path,
+                $this->domain,
+                $this->secure,
+                $this->httponly,
+                $this->samesite
+            );
+        }
+
+        /**
+         * 清除本类设置的 cookie
+         *
+         * @return bool
+         */
+        public function destroy() {
+            $deleted = false;
+            foreach ($_COOKIE as $key => $value) {
+                if (strpos($key, $this->prefix) === 0) {
+                    $original_key = substr($key, strlen($this->prefix));
+                    $this->delete($original_key);
+                    $deleted = true;
+                }
+            }
+            return $deleted;
+        }
+
+        /**
+         * 获取当前域名
+         * @param string $custom_domain
+         * @return false|mixed|string
+         */
+        private function getCurrentDomain( string $custom_domain='' ) {
+
+            if ( is_string($custom_domain) && $custom_domain!=='' ) {
                 return $custom_domain;
             }
 
@@ -64,10 +257,33 @@ if (!class_exists('LUCookie')) {
             return $host;
         }
 
-        private function setCookieCompat($name, $value, $expire_time, $path, $domain, $secure, $httponly, $samesite = 'Lax') {
+        /**
+         * 设置 cookie
+         *
+         * @param string $key
+         * @param string $value
+         * @param int $expire_time :过期时间
+         * @param string $path
+         * @param string $domain
+         * @param string $secure
+         * @param string $httponly
+         * @param string $samesite
+         * @return bool
+         */
+        private function _setCookieCompat(
+            string $key,
+            string $value,
+            int $expire_time,
+            string $path,
+            string $domain,
+            string $secure,
+            string $httponly,
+            string $samesite = 'Lax'
+        ) {
+
             $cookie = sprintf(
                 '%s=%s; expires=%s; path=%s%s%s%s%s',
-                rawurlencode($name),
+                rawurlencode($key),
                 rawurlencode($value),
                 gmdate('D, d-M-Y H:i:s T', $expire_time > 0 ? $expire_time : 2147483647),
                 $path,
@@ -77,18 +293,22 @@ if (!class_exists('LUCookie')) {
                 $samesite ? '; SameSite=' . $samesite : ''
             );
 
-            if (headers_sent()) {
+            if ( headers_sent() ) {
                 return false;
             }
 
             header('Set-Cookie: ' . $cookie, false);
+
             return true;
         }
 
         /**
-         * 自定义编码：将数组转为 base64 字符串（无 JSON）
+         * 将数组转为 base64 字符串
+         *
+         * @param array $data
+         * @return string
          */
-        private function encodeData(array $data) {
+        private function _encode_data( array $data ) {
             // 构造格式：value=...&expire=...&set_at=...
             $parts = array();
             foreach ($data as $k => $v) {
@@ -103,10 +323,14 @@ if (!class_exists('LUCookie')) {
         }
 
         /**
-         * 自定义解码：还原为数组
+         * 将 base64 字符串 还原为数组
+         *
+         * @param $_encode_data
+         * @return array|null
          */
-        private function decodeData($encoded) {
-            $plain = base64_decode($encoded, true);
+        private function _decode_data( string $_encode_data ) {
+
+            $plain = base64_decode($_encode_data, true);
             if ($plain === false) {
                 return null;
             }
@@ -134,143 +358,11 @@ if (!class_exists('LUCookie')) {
             return $data;
         }
 
-        public function set($key, $value, $expire_seconds = 0) {
-            $current_timestamp = time(); // ✅ 统一使用 time()
-            $full_key = $this->prefix . $key;
-            $expire_time = $expire_seconds > 0 ? $current_timestamp + $expire_seconds : 0;
 
-            $cookie_data = array(
-                'value' => (string)$value,
-                'expire' => $expire_time,
-                'set_at' => $current_timestamp
-            );
 
-            $encoded_value = $this->encodeData($cookie_data);
 
-            return $this->setCookieCompat(
-                $full_key,
-                $encoded_value,
-                $expire_time,
-                $this->path,
-                $this->domain,
-                $this->secure,
-                $this->httponly,
-                $this->samesite
-            );
-        }
 
-        public function get($key) {
-            $full_key = $this->prefix . $key;
-            if (!isset($_COOKIE[$full_key])) {
-                return false;
-            }
 
-            $current_timestamp = time(); // ✅ 统一使用 time()
 
-            try {
-                $data = $this->decodeData($_COOKIE[$full_key]);
-                if ($data === null) {
-                    throw new \Exception('Invalid cookie structure');
-                }
-
-                if ($data['expire'] > 0 && $current_timestamp > $data['expire']) {
-                    $this->delete($key);
-                    return false;
-                }
-
-                return $data['value'];
-
-            } catch (\Exception $e) {
-                $this->delete($key);
-                error_log("LUCookie::get() failed to decode cookie '$key': " . $e->getMessage());
-                return false;
-            }
-        }
-
-        public function check($key, $value) {
-            return $this->get($key) === $value;
-        }
-
-        public function getMeta($key) {
-            $full_key = $this->prefix . $key;
-            if (!isset($_COOKIE[$full_key])) {
-                return false;
-            }
-
-            $current_timestamp = time(); // ✅ 统一使用 time()
-
-            try {
-                $data = $this->decodeData($_COOKIE[$full_key]);
-                if ($data === null) {
-                    throw new \Exception('Invalid cookie structure');
-                }
-
-                if ($data['expire'] > 0 && $current_timestamp > $data['expire']) {
-                    $this->delete($key);
-                    return false;
-                }
-
-                return array(
-                    'value' => $data['value'],
-                    'expire' => $data['expire'],
-                    'set_at' => $data['set_at'],
-                    'age' => $current_timestamp - $data['set_at'],
-                );
-
-            } catch (\Exception $e) {
-                $this->delete($key);
-                error_log("LUCookie::getMeta() failed for '$key': " . $e->getMessage());
-                return false;
-            }
-        }
-
-        public function delete($key) {
-            $full_key = $this->prefix . $key;
-            return $this->setCookieCompat(
-                $full_key,
-                '',
-                time() - 3600,
-                $this->path,
-                $this->domain,
-                $this->secure,
-                $this->httponly,
-                $this->samesite
-            );
-        }
-
-        public function destroy() {
-            $deleted = false;
-            foreach ($_COOKIE as $key => $value) {
-                if (strpos($key, $this->prefix) === 0) {
-                    $original_key = substr($key, strlen($this->prefix));
-                    $this->delete($original_key);
-                    $deleted = true;
-                }
-            }
-            return $deleted;
-        }
-
-        public function gc() {
-            if (mt_rand(1, 100) > 20) {
-                return;
-            }
-
-            $current_timestamp = time(); // ✅ 统一使用 time()
-
-            foreach ($_COOKIE as $key => $value) {
-                if (strpos($key, $this->prefix) === 0) {
-                    try {
-                        $data = $this->decodeData($value);
-                        if ($data !== null && isset($data['expire']) && $data['expire'] > 0 && $current_timestamp > $data['expire']) {
-                            $original_key = substr($key, strlen($this->prefix));
-                            $this->delete($original_key);
-                        }
-                    } catch (\Exception $e) {
-                        $original_key = substr($key, strlen($this->prefix));
-                        $this->delete($original_key);
-                    }
-                }
-            }
-        }
     }
 }

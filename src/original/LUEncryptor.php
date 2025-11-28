@@ -66,7 +66,7 @@ if (!class_exists('LUEncryptor')) {
          *                             true: 使用 AES-128-CBC (速度更快)
          *                             false: 使用 AES-256-CBC (安全性更高)
          */
-        public function __construct(string $key, bool $useFastCipher = false)
+        public function __construct( string $key, bool $useFastCipher = false )
         {
             $this->useFastCipher = $useFastCipher;
             $cipher = $this->getCipher();
@@ -81,7 +81,7 @@ if (!class_exists('LUEncryptor')) {
                 $this->key = substr($key, 0, $keyLength);
             } else {
                 // 如果原始密钥长度不足，使用填充方式补足
-                $this->key = str_pad($key, $keyLength, 'luphp-e78c8be696afe59fba-gfi5986u');
+                $this->key = str_pad($key, $keyLength, 'luphp-e78c8be696afe59fba-gfi5986u-kdfskfd0934kf65sa');
             }
         }
 
