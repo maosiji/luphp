@@ -90,12 +90,11 @@ if (!class_exists('LUWPCache')) {
             // 1. 设置内存缓存（当前请求内有效）
             $this->cache[$groupKey] = $data;
 
+            // 对象缓存（通常存储在内存缓存服务如Redis/Memcached中）
+            wp_cache_set($groupKey, $data, $group, $expire_senconds);
+
             // 2. 如果需要持久化，设置对象缓存和瞬态缓存
             if ($persistent) {
-
-                // 对象缓存（通常存储在内存缓存服务如Redis/Memcached中）
-                wp_cache_set($groupKey, $data, $group, $expire_senconds);
-
                 // 瞬态缓存（存储在数据库中，确保持久性）
                 set_transient($groupKey, $data, $expire_senconds);
             }

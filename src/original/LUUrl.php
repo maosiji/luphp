@@ -20,6 +20,8 @@ if ( !class_exists( 'LUUrl' ) ) {
         {
         }
 
+
+
         /**
          * 获取当前链接的域名部分
          * @param string|null $url
