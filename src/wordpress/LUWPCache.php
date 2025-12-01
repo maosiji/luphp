@@ -72,7 +72,7 @@ if (!class_exists('LUWPCache')) {
          * @param array $requests 需要强制缓存的请求类型，ajax/cron/rest/favicon
          * @return void
          */
-        public function set( string $key, $data, string $group, int $expire_senconds=0, bool $persistent=true, array $requests=[] )
+        public function set( string $key, $data, int $expire_senconds=0, string $group='xyysd', bool $persistent=true, array $requests=[] )
         {
             // 防重复执行（同一请求内）
             static $executed = [];
@@ -108,7 +108,7 @@ if (!class_exists('LUWPCache')) {
          * @param bool $persistent 是否持久化新生成的数据
          * @return mixed 返回缓存数据，如果不存在且无回调则返回false
          */
-        public function get( string $key, string $group ) {
+        public function get( string $key, string $group='xyysd' ) {
 
             $groupKey = $group.'_'.$key;
 
@@ -357,9 +357,9 @@ if (!class_exists('LUWPCache')) {
          */
         public function get_or_rebuild(
             string $key,
-            string $group,
             $callback,
             int $expire_seconds = 3600,
+            string $group='xyysd',
             int $lock_ttl = 5,
             bool $persistent = true
         )
