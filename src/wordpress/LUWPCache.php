@@ -70,7 +70,6 @@ if (!class_exists('LUWPCache')) {
          * @param int $expire_senconds      : 过期秒数，0 表示永不过期，默认 0.
          * @param bool $persistent 是否持久化到对象缓存和瞬态缓存
          * @param array $requests 需要强制缓存的请求类型，ajax/cron/rest/favicon
-         * @return void
          */
         public function set( string $key, $data, int $expire_senconds=0, string $group='xyysd', bool $persistent=true, array $requests=[] )
         {
