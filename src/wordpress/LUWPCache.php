@@ -9,7 +9,7 @@
  * project              : luphp
  */
 
-namespace WUTI\XYYSD;
+namespace MAOSIJI\LU\WP;
 
 if (!defined('ABSPATH')) {die;}
 if (!class_exists('LUWPCache')) {
