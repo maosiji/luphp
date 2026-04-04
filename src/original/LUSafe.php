@@ -33,9 +33,8 @@ if (!class_exists('LUSafe')) {
          * 检查是否连续点击 AJAX 按钮，并禁止
          *
          * @param int $timediff 时间间隔（秒），默认 3 秒
-         * @param string $errorMessage 自定义错误信息
          */
-        public function check_too_many_requests(int $timediff = self::DEFAULT_TIME_INTERVAL)
+        public function check_too_many_requests( int $timediff = self::DEFAULT_TIME_INTERVAL )
         {
             // 检查 session 中是否有上一次请求的时间戳
             if (isset($_SESSION['last_request_time'])) {
@@ -44,13 +43,16 @@ if (!class_exists('LUSafe')) {
 
                 // 如果时间差小于设定值，返回 429 Too Many Requests
                 if ($timeDifference < $timediff) {
-                    http_response_code(429);
-                    exit;
+//                    http_response_code(429);
+//                    exit;
+                    return (new LUSend())->send_array( 0, '请求太频繁，请稍后再试' );
                 }
             }
 
             // 更新 session 中的请求时间
             $_SESSION['last_request_time'] = time();
+
+            return (new LUSend())->send_array( 1, '放行' );
         }
 
         /**
