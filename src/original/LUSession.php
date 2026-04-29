@@ -11,23 +11,26 @@
 
 namespace MAOSIJI\LU;
 
-if (!class_exists('LUSession')) {
-    /**
-     * LUSession - 安全封装 PHP 原生 Session 的单例工具类
-     *
-     * 功能：
-     * - 自动安全配置 Session（仅 Cookie、HttpOnly、Secure 等）
-     * - 统一设置合理的过期策略（服务端 + 客户端）
-     * - 提供会话销毁、ID 重生成等安全操作
-     *
-     * 使用说明：
-     * - 本类不修改 $_SESSION 结构，用户可直接操作原生 Session
-     * - 推荐在应用初始化阶段调用 getInstance() 确保 Session 启动
-     */
-    class LUSession
+use MAOSIJI\LU\EXCEPTION\LUSessionException;
+
+/**
+ * LUSession - 安全封装 PHP 原生 Session 的单例工具类
+ *
+ * 功能：
+ * - 自动安全配置 Session（仅 Cookie、HttpOnly、Secure 等）
+ * - 统一设置合理的过期策略（服务端 + 客户端）
+ * - 提供会话销毁、ID 重生成等安全操作
+ *
+ * 使用说明：
+ * - 本类不修改 $_SESSION 结构，用户可直接操作原生 Session
+ * - 推荐在应用初始化阶段调用 getInstance() 确保 Session 启动
+ */
+class LUSession
     {
         /** @var LUSession|null 单例实例 */
         private static $instance = null;
+
+        const LAST_ACTIVITY_KEY = 'maosiji_lu_last_activity';
 
         /** @var bool 标记 Session 是否已启动 */
         private $started = false;
@@ -86,14 +89,14 @@ if (!class_exists('LUSession')) {
             ini_set('session.cookie_httponly', '1');
 
             // 若当前连接为 HTTPS，则启用 Secure Cookie
-            $isHttps = (new LUUrl())->is_https();
+            $isHttps = $this->_isSecureConnection();
             if ($isHttps) {
                 ini_set('session.cookie_secure', '1');
             }
 
             // 设置服务端 Session 数据最大存活时间（2 小时）
             // 不设置，浏览器关闭时，session失效
-//            ini_set('session.gc_maxlifetime', '7200');
+            ini_set('session.gc_maxlifetime', '7200');
 
             // 兼容 PHP 7.0–7.2：session_set_cookie_params 不支持数组参数
             // 函数签名：session_set_cookie_params(lifetime, path, domain, secure, httponly)
@@ -120,7 +123,7 @@ if (!class_exists('LUSession')) {
          *
          * @return bool 成功返回 true，若 Session 未激活则返回 false
          */
-        public function destroy()
+        public function destroy(): bool
         {
             if (session_status() !== PHP_SESSION_ACTIVE) {
                 return false;
@@ -144,9 +147,8 @@ if (!class_exists('LUSession')) {
          * 建议在用户登录成功后调用此方法。
          *
          * @param bool $deleteOld 是否删除旧的 Session 文件（默认 true）
-         * @return void
          */
-        public function regenerate_id($deleteOld = true)
+        public function regenerate_id( bool $deleteOld = true )
         {
             if ($this->started) {
                 session_regenerate_id($deleteOld);
@@ -160,7 +162,7 @@ if (!class_exists('LUSession')) {
          *
          * @return string 当前会话 ID（如 "abc123def456"）
          */
-        public function get_id()
+        public function get_id(): string
         {
             return session_id();
         }
@@ -174,18 +176,29 @@ if (!class_exists('LUSession')) {
         public function activity_destroy( int $expire_seconds )
         {
             // 每个页面顶部检查
-            if (isset($_SESSION['maosiji_lu_last_activity']) && (time() - $_SESSION['maosiji_lu_last_activity']) > $expire_seconds) {
+            if (isset($_SESSION[self::LAST_ACTIVITY_KEY]) && (time() - $_SESSION[self::LAST_ACTIVITY_KEY]) > $expire_seconds) {
                 $this->destroy();
-                exit;
+                throw new LUSessionException('由于不活动，会话已过期', LUSessionException::CODE_SESSION_EXPIRED);
             }
 
-            $_SESSION['maosiji_lu_last_activity'] = time(); // 更新活跃时间
+            $_SESSION[self::LAST_ACTIVITY_KEY] = time(); // 更新活跃时间
         }
+
+    /**
+     * 判断是不是 https
+     * @return bool
+     */
+    private function _isSecureConnection(): bool
+    {
+        if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') return true;
+        if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https') return true;
+        if (!empty($_SERVER['HTTP_FRONT_END_HTTPS']) && strtolower($_SERVER['HTTP_FRONT_END_HTTPS']) === 'on') return true;
+        return false;
+    }
 
 
 
     }
-}
 
 /*
  * 若是 WordPress 程序，放入以下代码保证执行 session

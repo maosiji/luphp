@@ -12,15 +12,14 @@
 namespace MAOSIJI\LU\WP;
 
 if (!defined('ABSPATH')) {die;}
-if (!class_exists('LUWPCache')) {
-    /**
-     * 高级WordPress缓存管理类，不能存 false
-     *
-     * 提供多级缓存管理（内存缓存、对象缓存、瞬态缓存）
-     * 支持自动刷新和事件驱动清除机制
-     *
-     */
-    class LUWPCache
+/**
+ * 高级WordPress缓存管理类，不能存 false
+ *
+ * 提供多级缓存管理（内存缓存、对象缓存、瞬态缓存）
+ * 支持自动刷新和事件驱动清除机制
+ *
+ */
+class LUWPCache
     {
         /**
          * 内存缓存存储数组
@@ -67,11 +66,11 @@ if (!class_exists('LUWPCache')) {
          * @param string $key 缓存键名（建议使用前缀避免冲突）
          * @param mixed $data 要缓存的数据（支持所有可序列化类型）
          * @param string $group             : 组名称（必须）
-         * @param int $expire_senconds      : 过期秒数，0 表示永不过期，默认 0.
-         * @param bool $persistent 是否持久化到对象缓存和瞬态缓存
-         * @param array $requests 需要强制缓存的请求类型，ajax/cron/rest/favicon
+         * @param int $expire_seconds      : 过期秒数，0 表示永不过期，默认 0.
+         * @param bool $persistent 是否持久化到瞬态缓存
+         * @param array $requests 跳过的请求，ajax/cron/rest/favicon
          */
-        public function set( string $key, $data, int $expire_senconds=0, string $group='xyysd', bool $persistent=true, array $requests=[] )
+        public function set( string $key, $data, int $expire_seconds=0, string $group='xyysd', bool $persistent=true, array $requests=[] )
         {
             // 防重复执行（同一请求内）
             static $executed = [];
@@ -90,12 +89,12 @@ if (!class_exists('LUWPCache')) {
             $this->cache[$groupKey] = $data;
 
             // 对象缓存（通常存储在内存缓存服务如Redis/Memcached中）
-            wp_cache_set($groupKey, $data, $group, $expire_senconds);
+            wp_cache_set($groupKey, $data, $group, $expire_seconds);
 
-            // 2. 如果需要持久化，设置对象缓存和瞬态缓存
+            // 2. 如果需要持久化，设置瞬态缓存
             if ($persistent) {
                 // 瞬态缓存（存储在数据库中，确保持久性）
-                set_transient($groupKey, $data, $expire_senconds);
+                set_transient($groupKey, $data, $expire_seconds);
             }
         }
 
@@ -150,7 +149,7 @@ if (!class_exists('LUWPCache')) {
          *  当 key 不为空，groups 不为空时，精准清除。
          *
          */
-        public function delete( string $key='', $groups='' ) {
+        public function delete( string $key='', string $groups='' ) {
 
             $this->delete_memory_cache( $key, $groups );
             $this->delete_object_cache( $key, $groups );
@@ -180,7 +179,7 @@ if (!class_exists('LUWPCache')) {
          * // 5. 精准清除多个组下的同名 key
          * $cache->delete_memory_cache( 'config', ['group1', 'group2'] );
          */
-        private function delete_memory_cache( string $key='', $groups='' )
+        private function delete_memory_cache( string $key='', string $groups='' )
         {
             if ( $key==='' && $groups==='' ) {
                 $this->cache = [];
@@ -227,7 +226,7 @@ if (!class_exists('LUWPCache')) {
          * // 5. 精准清除多个组下的同名 key
          * $cache->delete_object_cache( 'config', ['group1', 'group2'] );
          */
-        private function delete_object_cache( string $key='', $groups='' )
+        private function delete_object_cache( string $key='', string $groups='' )
         {
             if ( $key==='' && $groups==='' ) {
                 wp_cache_flush();
@@ -274,7 +273,7 @@ if (!class_exists('LUWPCache')) {
          * // 5. 精准清除多个组下的同名 key
          * $cache->delete_transients( 'config', ['group1', 'group2'] );
          */
-        private function delete_transients( string $key='', $groups='' )
+        private function delete_transients( string $key='', string $groups='' )
         {
             global $wpdb;
 
@@ -451,7 +450,7 @@ if (!class_exists('LUWPCache')) {
          * @param array $arr : 可选值：空、favicon / ajax / cron / rest，填写哪些请求，则不禁止哪些请求。
          * @return bool
          */
-        private function is_background_request( $arr=[] ): bool {
+        private function is_background_request( array $arr=[] ): bool {
 
             if ( !empty($arr) ) {
 
@@ -669,7 +668,6 @@ if (!class_exists('LUWPCache')) {
 
 
     }
-}
 
 /* ==================== 使用示例 ==================== */
 

@@ -11,10 +11,11 @@
 
 namespace MAOSIJI\LU;
 
+use MAOSIJI\LU\EXCEPTION\LURandomException;
+
 if (!class_exists('LURandom')) {
     class LURandom
     {
-        const MSG_SUCCESS = '随机数 生成成功';
         const CHAR_POOL = [
             'lowercase'         => 'abcdefghijklmnopqrstuvwxyz',
             'uppercase'         => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
@@ -42,29 +43,62 @@ if (!class_exists('LURandom')) {
         }
 
         /**
-         * 使用 mt_rand 生成随机奇数
-         *
-         * @deprecated {@see generateOdd() }
-         *
-         * @return int 随机奇数
+         * 生成随机字符串
+         * @param 'lowercase'|'uppercase'|'case'|'number'|'odd'|'even'|'special'| ...$charPools
+         * @param int $length:长度
+         * @param bool $isFirstCharNotZero:开头是否排除 0，默认 false
+         * @param string $customChar:自定义字符
+         * @return string
          */
-        public function rand_odd(): int
+        public function generateString( array $charPools, int $length=6, bool $isFirstCharNotZero=false, string $customChar='' ): string
         {
-            trigger_error(
-                'LURandom::rand_odd() 已废弃，将在 2.0.0 版本移除，请使用 generateOdd() 替代',
-                E_USER_DEPRECATED
-            );
+            $str = '';
+            $char = '';
 
-            return (mt_rand(0, 4) * 2) + 1;
+            if (!empty($charPools)) {
+                foreach ( $charPools as $charPool ) {
+                    if ( $isFirstCharNotZero ) {
+                        if ( $charPool==='number' ) {
+                            $charPool = 'number_not_0';
+                        }
+                        if ( $charPool==='even' ) {
+                            $charPool = 'even_not_0';
+                        }
+                    }
+                    $char .= self::CHAR_POOL[$charPool] ?? '';
+                }
+            }
+
+            // 去除空格
+            $customChar = str_replace( " ", "", $customChar );
+            $firstChar = '';
+            if ( !empty($customChar) && $isFirstCharNotZero ) {
+                // 去除 0
+                $customCharFirst = str_replace( "0", "", $customChar );
+                // 首字母的字符串池（是否去 0）
+                $charFirst = $char.$customCharFirst;
+                $firstChar = $customCharFirst[mt_rand( 0, strlen($charFirst)-1 )];
+            }
+
+            // 字符串池
+            $char = $char.$customChar;
+            $charLength = strlen($char);
+
+            for( $i=0; $i < $length-strlen($firstChar); $i++ ) {
+                $index = mt_rand( 0, $charLength-1 );
+                $str .= $char[$index];
+            }
+
+            return $firstChar.$str;
         }
 
         /**
          * 生成随机奇数
          *
          * @param int $length:长度
-         * @return LUResult
+         * @return string
          */
-        public function generateOdd( int $length = 6 ): LUResult
+        public function generateOdd( int $length = 6 ): string
         {
             $str = '';
             $charPool = self::CHAR_POOL['odd'];
@@ -75,7 +109,7 @@ if (!class_exists('LURandom')) {
                 $str .= $charPool[$index];
             }
 
-            return LUResult::success( $str, self::MSG_SUCCESS );
+            return $str;
         }
 
         /**
@@ -83,9 +117,9 @@ if (!class_exists('LURandom')) {
          *
          * @param int $length:长度
          * @param bool $isFirstCharNotZero:开头是否排除 0，默认 false
-         * @return LUResult
+         * @return string
          */
-        public function generateEven( int $length = 6, bool $isFirstCharNotZero=false ): LUResult
+        public function generateEven( int $length = 6, bool $isFirstCharNotZero=false ): string
         {
             $str = '';
 
@@ -103,16 +137,16 @@ if (!class_exists('LURandom')) {
                 $str .= $charPool[$index];
             }
 
-            return LUResult::success( $str, self::MSG_SUCCESS );
+            return $str;
         }
 
         /**
          * 生成随机小写字母
          *
          * @param int $length:长度
-         * @return LUResult
+         * @return string
          */
-        public function generateLowercase( int $length = 6 ): LUResult
+        public function generateLowercase( int $length = 6 ): string
         {
             $str = '';
             $charPool = self::CHAR_POOL['lowercase'];
@@ -123,16 +157,16 @@ if (!class_exists('LURandom')) {
                 $str .= $charPool[$index];
             }
 
-            return LUResult::success( $str, self::MSG_SUCCESS );
+            return $str;
         }
 
         /**
          * 生成随机大写字母
          *
          * @param int $length:长度
-         * @return LUResult
+         * @return string
          */
-        public function generateUppercase( int $length = 6 ): LUResult
+        public function generateUppercase( int $length = 6 ): string
         {
             $str = '';
             $charPool = self::CHAR_POOL['uppercase'];
@@ -143,16 +177,16 @@ if (!class_exists('LURandom')) {
                 $str .= $charPool[$index];
             }
 
-            return LUResult::success( $str, self::MSG_SUCCESS );
+            return $str;
         }
 
         /**
          * 生成随机字母
          *
          * @param int $length:长度
-         * @return LUResult
+         * @return string
          */
-        public function generateCase( int $length = 6 ): LUResult
+        public function generateCase( int $length = 6 ): string
         {
             $str = '';
             $charPool = self::CHAR_POOL['uppercase'].self::CHAR_POOL['lowercase'];
@@ -163,7 +197,7 @@ if (!class_exists('LURandom')) {
                 $str .= $charPool[$index];
             }
 
-            return LUResult::success( $str, self::MSG_SUCCESS );
+            return $str;
         }
 
         /**
@@ -171,9 +205,9 @@ if (!class_exists('LURandom')) {
          *
          * @param int $length:长度
          * @param bool $isFirstCharNotZero:开头是否排除 0，默认 false
-         * @return LUResult
+         * @return string
          */
-        public function generateNumber( int $length = 6, bool $isFirstCharNotZero=false ): LUResult
+        public function generateNumber( int $length = 6, bool $isFirstCharNotZero=false ): string
         {
             $str = '';
 
@@ -192,146 +226,73 @@ if (!class_exists('LURandom')) {
                 $str .= $charPool[$index];
             }
 
-            return LUResult::success( $str, self::MSG_SUCCESS );
+            return $str;
         }
 
-        /**
-         * 生成随机字母 + 数字
-         *
-         * @param int $length:长度
-         * @param bool $isFirstCharNotZero:开头是否排除 0，默认 false
-         * @return LUResult
-         */
-        public function generateCaseAndNumber( int $length = 6, bool $isFirstCharNotZero=false ): LUResult
-        {
-            $str = '';
-
-            if ( $isFirstCharNotZero ) {
-                $firstCharPool = self::CHAR_POOL['uppercase'].self::CHAR_POOL['lowercase'].self::CHAR_POOL['number_not_0'];
-                $firstCharPoolLength = strlen($firstCharPool);
-                $str .= $firstCharPool[mt_rand( 0, $firstCharPoolLength-1 )];
-                $length = $length - 1;
-            }
-
-            $charPool = self::CHAR_POOL['uppercase'].self::CHAR_POOL['lowercase'].self::CHAR_POOL['number'];
-            $charPoolLength = strlen($charPool);
-
-            for( $i=0; $i < $length; $i++ ) {
-                $index = mt_rand( 0, $charPoolLength-1 );
-                $str .= $charPool[$index];
-            }
-
-            return LUResult::success( $str, self::MSG_SUCCESS );
-        }
-
-        /**
-         * 生成随机特殊符号
-         *
-         * @param int $length:长度
-         * @return LUResult
-         */
-        public function generateSpecial( int $length = 6 ): LUResult
-        {
-            $str = '';
-            $charPool = self::CHAR_POOL['special'];
-            $charPoolLength = strlen($charPool);
-
-            for( $i=0; $i < $length; $i++ ) {
-                $index = mt_rand( 0, $charPoolLength-1 );
-                $str .= $charPool[$index];
-            }
-
-            return LUResult::success( $str, self::MSG_SUCCESS );
-        }
-
-        /**
-         * 生成随机字母 + 数字 + 特殊字符
-         *
-         * @param int $length:长度
-         * @param bool $isFirstCharNotZero:开头是否排除 0，默认 false
-         * @return LUResult
-         */
-        public function generateCaseAndNumberAndSpecial( int $length = 6, bool $isFirstCharNotZero=false ): LUResult
-        {
-            $str = '';
-
-            if ( $isFirstCharNotZero ) {
-                $firstCharPool = self::CHAR_POOL['uppercase'].self::CHAR_POOL['lowercase'].self::CHAR_POOL['number_not_0'].self::CHAR_POOL['special'];
-                $firstCharPoolLength = strlen($firstCharPool);
-                $str .= $firstCharPool[mt_rand( 0, $firstCharPoolLength-1 )];
-                $length = $length - 1;
-            }
-
-            $charPool = self::CHAR_POOL['uppercase'].self::CHAR_POOL['lowercase'].self::CHAR_POOL['number'].self::CHAR_POOL['special'];
-            $charPoolLength = strlen($charPool);
-
-            for( $i=0; $i < $length; $i++ ) {
-                $index = mt_rand( 0, $charPoolLength-1 );
-                $str .= $charPool[$index];
-            }
-
-            return LUResult::success( $str, self::MSG_SUCCESS );
-        }
-
-        /**
-         * 生成随机自定义字符
-         *
-         * @param string $custom:自定义字符
-         * @param int $length:长度
-         * @return LUResult
-         */
-        public function generateCustom( string $custom, int $length = 6 ): LUResult
-        {
-            if (empty($custom)) return LUResult::error(1000, '自定义字符不可为空');
-
-            $str = '';
-            $charPool = $custom;
-            $charPoolLength = strlen($charPool);
-
-            for( $i=0; $i < $length; $i++ ) {
-                $index = mt_rand( 0, $charPoolLength-1 );
-                $str .= $charPool[$index];
-            }
-
-            return LUResult::success( $str, self::MSG_SUCCESS );
-        }
-
-        /**
-         * 生成随机自定义字符 + 已有字符
-         *
-         * @param string $custom:自定义字符
-         * @param array $charPools:已有字符数组，可选值：lowercase/uppercase/number/number_not_0/odd/even/even_not_0/special
-         * @param int $length:长度
-         * @return LUResult
-         */
-        public function generateCustomAdd( string $custom, array $charPools, int $length = 6 ): LUResult
-        {
-            if (empty($custom)) return LUResult::error(1000, '自定义字符不可为空');
-
-            $charPool = '';
-            if (!empty($charPools)) {
-                foreach ( $charPools as $cp ) {
-                    $charPool .= self::CHAR_POOL[$cp] ?? '';
-                }
-            }
-
-            $str = '';
-            $charPool .= $custom;
-            $charPoolLength = strlen($charPool);
-
-            for( $i=0; $i < $length; $i++ ) {
-                $index = mt_rand( 0, $charPoolLength-1 );
-                $str .= $charPool[$index];
-            }
-
-            return LUResult::success( $str, self::MSG_SUCCESS );
-        }
 
         /*********************************************************
         ************安全 random_int 游戏逻辑、随机抽取、ID 生成**********************************
          * *********************************************************/
 
-        public function generateSecureOdd( int $length = 6 ): LUResult
+        /**
+         * 生成安全随机字符串
+         * @param 'lowercase'|'uppercase'|'case'|'number'|'odd'|'even'|'special'| ...$charPools
+         * @param int $length:长度
+         * @param bool $isFirstCharNotZero:开头是否排除 0，默认 false
+         * @param string $customChar:自定义字符
+         * @return string
+         */
+        public function generateSecureString( array $charPools, int $length=6, bool $isFirstCharNotZero=false, string $customChar='' ): string
+        {
+            $str = '';
+            $char = '';
+
+            if (!empty($charPools)) {
+                foreach ( $charPools as $charPool ) {
+                    if ( $isFirstCharNotZero ) {
+                        if ( $charPool==='number' ) {
+                            $charPool = 'number_not_0';
+                        }
+                        if ( $charPool==='even' ) {
+                            $charPool = 'even_not_0';
+                        }
+                    }
+                    $char .= self::CHAR_POOL[$charPool] ?? '';
+                }
+            }
+
+            // 去除空格
+            $customChar = str_replace( " ", "", $customChar );
+            $firstChar = '';
+            if ( !empty($customChar) && $isFirstCharNotZero ) {
+                // 去除 0
+                $customCharFirst = str_replace( "0", "", $customChar );
+                // 首字母的字符串池（是否去 0）
+                $charFirst = $char.$customCharFirst;
+                try {
+                    $firstChar = $customCharFirst[random_int(0, strlen($charFirst) - 1)];
+                } catch (\Exception $e) {
+                    throw new LURandomException( '安全随机数生成失败，请检查系统环境', LURandomException::CODE_SYSTEM_ERROR, $e );
+                }
+            }
+
+            // 字符串池
+            $char = $char.$customChar;
+            $charLength = strlen($char);
+
+            for( $i=0; $i < $length-strlen($firstChar); $i++ ) {
+                try {
+                    $index = random_int(0, $charLength - 1);
+                } catch (\Exception $e) {
+                    throw new LURandomException( '安全随机数生成失败，请检查系统环境', LURandomException::CODE_SYSTEM_ERROR, $e );
+                }
+                $str .= $char[$index];
+            }
+
+            return $firstChar.$str;
+        }
+
+        public function generateSecureOdd( int $length = 6 ): string
         {
             $str = '';
             $charPool = self::CHAR_POOL['odd'];
@@ -341,14 +302,14 @@ if (!class_exists('LURandom')) {
                 try {
                     $index = random_int(0, $charPoolLength - 1);
                 } catch (\Exception $e) {
-                    throw new \RuntimeException('安全随机数生成失败，请检查系统环境', 0, $e);
+                    throw new LURandomException( '安全随机数生成失败，请检查系统环境', LURandomException::CODE_SYSTEM_ERROR, $e );
                 }
                 $str .= $charPool[$index];
             }
 
-            return LUResult::success( $str, self::MSG_SUCCESS );
+            return $str;
         }
-        public function generateSecureEven( int $length = 6, bool $isFirstCharNotZero=false ): LUResult
+        public function generateSecureEven( int $length = 6, bool $isFirstCharNotZero=false ): string
         {
             $str = '';
 
@@ -358,7 +319,7 @@ if (!class_exists('LURandom')) {
                 try {
                     $str .= $firstCharPool[random_int(0, $firstCharPoolLength - 1)];
                 } catch (\Exception $e) {
-                    throw new \RuntimeException('安全随机数生成失败，请检查系统环境', 0, $e);
+                    throw new LURandomException( '安全随机数生成失败，请检查系统环境', LURandomException::CODE_SYSTEM_ERROR, $e );
                 }
                 $length = $length - 1;
             }
@@ -369,14 +330,14 @@ if (!class_exists('LURandom')) {
                 try {
                     $index = random_int(0, $charPoolLength - 1);
                 } catch (\Exception $e) {
-                    throw new \RuntimeException('安全随机数生成失败，请检查系统环境', 0, $e);
+                    throw new LURandomException( '安全随机数生成失败，请检查系统环境', LURandomException::CODE_SYSTEM_ERROR, $e );
                 }
                 $str .= $charPool[$index];
             }
 
-            return LUResult::success( $str, self::MSG_SUCCESS );
+            return $str;
         }
-        public function generateSecureLowercase( int $length = 6 ): LUResult
+        public function generateSecureLowercase( int $length = 6 ): string
         {
             $str = '';
             $charPool = self::CHAR_POOL['lowercase'];
@@ -386,14 +347,14 @@ if (!class_exists('LURandom')) {
                 try {
                     $index = random_int(0, $charPoolLength - 1);
                 } catch (\Exception $e) {
-                    throw new \RuntimeException('安全随机数生成失败，请检查系统环境', 0, $e);
+                    throw new LURandomException( '安全随机数生成失败，请检查系统环境', LURandomException::CODE_SYSTEM_ERROR, $e );
                 }
                 $str .= $charPool[$index];
             }
 
-            return LUResult::success( $str, self::MSG_SUCCESS );
+            return $str;
         }
-        public function generateSecureUppercase( int $length = 6 ): LUResult
+        public function generateSecureUppercase( int $length = 6 ): string
         {
             $str = '';
             $charPool = self::CHAR_POOL['uppercase'];
@@ -403,14 +364,14 @@ if (!class_exists('LURandom')) {
                 try {
                     $index = random_int(0, $charPoolLength - 1);
                 } catch (\Exception $e) {
-                    throw new \RuntimeException('安全随机数生成失败，请检查系统环境', 0, $e);
+                    throw new LURandomException( '安全随机数生成失败，请检查系统环境', LURandomException::CODE_SYSTEM_ERROR, $e );
                 }
                 $str .= $charPool[$index];
             }
 
-            return LUResult::success( $str, self::MSG_SUCCESS );
+            return $str;
         }
-        public function generateSecureCase( int $length = 6 ): LUResult
+        public function generateSecureCase( int $length = 6 ): string
         {
             $str = '';
             $charPool = self::CHAR_POOL['uppercase'].self::CHAR_POOL['lowercase'];
@@ -420,14 +381,14 @@ if (!class_exists('LURandom')) {
                 try {
                     $index = random_int(0, $charPoolLength - 1);
                 } catch (\Exception $e) {
-                    throw new \RuntimeException('安全随机数生成失败，请检查系统环境', 0, $e);
+                    throw new LURandomException( '安全随机数生成失败，请检查系统环境', LURandomException::CODE_SYSTEM_ERROR, $e );
                 }
                 $str .= $charPool[$index];
             }
 
-            return LUResult::success( $str, self::MSG_SUCCESS );
+            return $str;
         }
-        public function generateSecureNumber( int $length = 6, bool $isFirstCharNotZero=false ): LUResult
+        public function generateSecureNumber( int $length = 6, bool $isFirstCharNotZero=false ): string
         {
             $str = '';
 
@@ -437,7 +398,7 @@ if (!class_exists('LURandom')) {
                 try {
                     $str .= $firstCharPool[random_int(0, $firstCharPoolLength - 1)];
                 } catch (\Exception $e) {
-                    throw new \RuntimeException('安全随机数生成失败，请检查系统环境', 0, $e);
+                    throw new LURandomException( '安全随机数生成失败，请检查系统环境', LURandomException::CODE_SYSTEM_ERROR, $e );
                 }
                 $length = $length - 1;
             }
@@ -449,133 +410,14 @@ if (!class_exists('LURandom')) {
                 try {
                     $index = random_int(0, $charPoolLength - 1);
                 } catch (\Exception $e) {
-                    throw new \RuntimeException('安全随机数生成失败，请检查系统环境', 0, $e);
+                    throw new LURandomException( '安全随机数生成失败，请检查系统环境', LURandomException::CODE_SYSTEM_ERROR, $e );
                 }
                 $str .= $charPool[$index];
             }
 
-            return LUResult::success( $str, self::MSG_SUCCESS );
+            return $str;
         }
-        public function generateSecureCaseAndNumber( int $length = 6, bool $isFirstCharNotZero=false ): LUResult
-        {
-            $str = '';
 
-            if ( $isFirstCharNotZero ) {
-                $firstCharPool = self::CHAR_POOL['uppercase'].self::CHAR_POOL['lowercase'].self::CHAR_POOL['number_not_0'];
-                $firstCharPoolLength = strlen($firstCharPool);
-                try {
-                    $str .= $firstCharPool[random_int(0, $firstCharPoolLength - 1)];
-                } catch (\Exception $e) {
-                    throw new \RuntimeException('安全随机数生成失败，请检查系统环境', 0, $e);
-                }
-                $length = $length - 1;
-            }
-
-            $charPool = self::CHAR_POOL['uppercase'].self::CHAR_POOL['lowercase'].self::CHAR_POOL['number'];
-            $charPoolLength = strlen($charPool);
-
-            for( $i=0; $i < $length; $i++ ) {
-                try {
-                    $index = random_int(0, $charPoolLength - 1);
-                } catch (\Exception $e) {
-                    throw new \RuntimeException('安全随机数生成失败，请检查系统环境', 0, $e);
-                }
-                $str .= $charPool[$index];
-            }
-
-            return LUResult::success( $str, self::MSG_SUCCESS );
-        }
-        public function generateSecureSpecial( int $length = 6 ): LUResult
-        {
-            $str = '';
-            $charPool = self::CHAR_POOL['special'];
-            $charPoolLength = strlen($charPool);
-
-            for( $i=0; $i < $length; $i++ ) {
-                try {
-                    $index = random_int(0, $charPoolLength - 1);
-                } catch (\Exception $e) {
-                    throw new \RuntimeException('安全随机数生成失败，请检查系统环境', 0, $e);
-                }
-                $str .= $charPool[$index];
-            }
-
-            return LUResult::success( $str, self::MSG_SUCCESS );
-        }
-        public function generateSecureCaseAndNumberAndSpecial( int $length = 6, bool $isFirstCharNotZero=false ): LUResult
-        {
-            $str = '';
-
-            if ( $isFirstCharNotZero ) {
-                $firstCharPool = self::CHAR_POOL['uppercase'].self::CHAR_POOL['lowercase'].self::CHAR_POOL['number_not_0'].self::CHAR_POOL['special'];
-                $firstCharPoolLength = strlen($firstCharPool);
-                try {
-                    $str .= $firstCharPool[random_int(0, $firstCharPoolLength - 1)];
-                } catch (\Exception $e) {
-                    throw new \RuntimeException('安全随机数生成失败，请检查系统环境', 0, $e);
-                }
-                $length = $length - 1;
-            }
-
-            $charPool = self::CHAR_POOL['uppercase'].self::CHAR_POOL['lowercase'].self::CHAR_POOL['number'].self::CHAR_POOL['special'];
-            $charPoolLength = strlen($charPool);
-
-            for( $i=0; $i < $length; $i++ ) {
-                try {
-                    $index = random_int(0, $charPoolLength - 1);
-                } catch (\Exception $e) {
-                    throw new \RuntimeException('安全随机数生成失败，请检查系统环境', 0, $e);
-                }
-                $str .= $charPool[$index];
-            }
-
-            return LUResult::success( $str, self::MSG_SUCCESS );
-        }
-        public function generateSecureCustom( string $custom, int $length = 6 ): LUResult
-        {
-            if (empty($custom)) return LUResult::error(1000, '自定义字符不可为空');
-
-            $str = '';
-            $charPool = $custom;
-            $charPoolLength = strlen($charPool);
-
-            for( $i=0; $i < $length; $i++ ) {
-                try {
-                    $index = random_int(0, $charPoolLength - 1);
-                } catch (\Exception $e) {
-                    throw new \RuntimeException('安全随机数生成失败，请检查系统环境', 0, $e);
-                }
-                $str .= $charPool[$index];
-            }
-
-            return LUResult::success( $str, self::MSG_SUCCESS );
-        }
-        public function generateSecureCustomAdd( string $custom, array $charPools, int $length = 6 ): LUResult
-        {
-            if (empty($custom)) return LUResult::error(1000, '自定义字符不可为空');
-
-            $charPool = '';
-            if ( !empty($charPools) ) {
-                foreach ( $charPools as $cp ) {
-                    $charPool .= self::CHAR_POOL[$cp] ?? '';
-                }
-            }
-
-            $str = '';
-            $charPool .= $custom;
-            $charPoolLength = strlen($charPool);
-
-            for( $i=0; $i < $length; $i++ ) {
-                try {
-                    $index = random_int(0, $charPoolLength - 1);
-                } catch (\Exception $e) {
-                    throw new \RuntimeException('安全随机数生成失败，请检查系统环境', 0, $e);
-                }
-                $str .= $charPool[$index];
-            }
-
-            return LUResult::success( $str, self::MSG_SUCCESS );
-        }
 
         /*********************************************************
          ************random_bytes 安全令牌、密钥、盐值、IV**********************************
@@ -586,53 +428,27 @@ if (!class_exists('LURandom')) {
          *
          * 用 random_bytes 生成的十六进制字符串只包含 0-9 和 a-f
          *
-         * @param int $length:长度，必须是偶数位
+         * @param int $length:长度，必须是偶数
          * @param bool $isUseStrict:是否启用严格模式，默认 true，即 $length 必须为偶数。
          *                          若为 false，则计算长度的结果直接舍弃小数部分。
+         *
+         * @throws LURandomException( $length, '严格模式下，长度不是偶数。' );
          * */
-        public function generateSecureStr( int $length = 32, bool $isUseStrict=true ): LUResult
+        public function generateSecureBytes( int $length = 32, bool $isUseStrict=true ): string
         {
             if ( $isUseStrict && $length % 2 !== 0 ) {
-                return LUResult::error(1000, '$length 不是偶数', $length );
+                throw new LURandomException( '严格模式下，长度必须是偶数。', LURandomException::CODE_INVALID_LENGTH, null, $length );
             }
 
             try {
                 $str = bin2hex(random_bytes(intdiv($length, 2)));
             } catch (\Exception $e) {
-                throw new \RuntimeException('安全随机数生成失败，请检查系统环境', 0, $e);
+                throw new LURandomException( '安全随机数生成失败，请检查系统环境', LURandomException::CODE_SYSTEM_ERROR, $e );
             }
 
-            return LUResult::success($str, self::MSG_SUCCESS);
+            return $str;
         }
 
-        /*********************************************************
-         **********************************************
-         * *********************************************************/
-
-        /**
-         * 生成随机字符串（先用 random_bytes，如果不可用，直接用 mt_rand，保证有有效返回值）
-         *
-         * @param int $length:长度
-         * @param bool $isUseStrict:是否启用严格模式，默认 true，即 $length 必须为偶数。
-         * */
-        public function generateStr( int $length = 16, bool $isUseStrict=true ): LUResult
-        {
-            try {
-                $return = $this->generateSecureStr( $length, $isUseStrict );
-                if ( $return->isSuccess() ) {
-                    return $return->getData();
-                }
-
-                // 如果 generateSecureStr 返回了错误（理论上它只抛异常或返回成功），此处作为兜底
-                error_log('generateSecureStr 返回错误: ' . $return->getMsg());
-
-            } catch (\Exception $e) {
-                // 捕获 random_bytes 失败等异常，记录日志
-                error_log('安全随机数生成失败，降级使用普通随机: ' . $e->getMessage());
-            }
-
-            return $this->generateCaseAndNumber( $length );
-        }
 
     }
 }

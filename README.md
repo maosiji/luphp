@@ -2,6 +2,24 @@
 
 封装一些常用功能，便于快速开发（测试中...）
 
+## Exception
+
+| 类名 | 介绍         | 异常码前缀 |
+|:---|:-----------|:-----|
+|LURandom| 随机数        | 100  |
+|LUEncryptor| 加解密        | 200 |
+|LUFile| 文件上传       | 300 |
+|LUWPFile|WP文件上传|310|
+|LUApiSigner| API签名验证    | 400  |
+|LUIdcard| 身份证号码      | 500     |
+|LUIp| IP识别       | 600     |
+|LUVerifiableNumber19| 19位可验证数字生成 | 700     |
+|LUVerifiableString18|18位可验证字符串生成|710|
+|LUSession|session|800|
+|LUURL|url操作|900|
+
+
+
 ## Original
 
 ### 1、LuUrl

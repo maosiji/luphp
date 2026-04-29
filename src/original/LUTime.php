@@ -9,8 +9,7 @@
  */
 
 namespace MAOSIJI\LU;
-if ( !class_exists( 'LUTime' ) ) {
-	class LUTime
+class LUTime
 	{
 		function __construct ()
 		{
@@ -53,7 +52,7 @@ if ( !class_exists( 'LUTime' ) ) {
          * @param string $birthday
          * @return int
          */
-        public function age( string $birthday )
+        public function age( string $birthday ): int
         {
             // 创建出生日期对象
             $birthDateTime = \DateTime::createFromFormat('Y-m-d', $birthday);
@@ -208,8 +207,8 @@ if ( !class_exists( 'LUTime' ) ) {
             return $date;
         }
 
-        /****************************************************
-         * 获取未来最近的整 $interval_minutes 时间（戳）
+        /**********************************取未来最近的整 $interval_minutes 时间（******************
+         * 获戳）
          *****************************************************/
 
         /**
@@ -241,4 +240,3 @@ if ( !class_exists( 'LUTime' ) ) {
         }
 
 	}
-}

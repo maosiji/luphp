@@ -17,45 +17,43 @@
  */
 
 namespace MAOSIJI\LU;
-if (!class_exists('LULog')) {
-    class LULog
+
+class LULog
+{
+    public function __construct()
     {
-        public function __construct()
-        {
-        }
-        private function __clone()
-        {
-        }
-
-        /**
-         * 在网站根目录创建一个文件并写入信息
-         * @param $message :写入的信息
-         * @param $file : 文件名.后缀 如 lu.txt
-         * @return void
-         */
-        public function print( $message, $file ) {
-
-            //将日志文件放在根目录下/log/日期的文件夹名
-            $log_dir=$_SERVER['DOCUMENT_ROOT']."/log/".date('Ymd')."/";
-            //判断是否存在文件夹，没有则创建
-            if(!is_dir($log_dir)){
-                @mkdir($log_dir,0777,true);
-            }
-            //将错误日志记录写入文件中
-            $file=$log_dir.$file;
-            if(is_array($message)){
-                $arr=explode(".",$file);
-                if($arr[1]=='php'){
-                    error_log("<?php \n return ".var_export($message, true)."\n", 3,$file);
-                }else{
-                    error_log(var_export($message, true)."\n", 3,$file);
-                }
-            }else{
-                error_log($message."\n\n", 3,$file);
-            }
-        }
-
-
-
     }
+    private function __clone()
+    {
+    }
+
+    /**
+     * 在网站根目录创建一个文件并写入信息
+     * @param array|string $message :写入的信息
+     * @param $file : 文件名.后缀 如 lu.txt
+     */
+    public function print( $message, $file ) {
+
+        //将日志文件放在根目录下/log/日期的文件夹名
+        $log_dir=$_SERVER['DOCUMENT_ROOT']."/log/".date('Ymd')."/";
+        //判断是否存在文件夹，没有则创建
+        if(!is_dir($log_dir)){
+            @mkdir($log_dir,0777,true);
+        }
+        //将错误日志记录写入文件中
+        $file=$log_dir.$file;
+        if(is_array($message)){
+            $arr=explode(".",$file);
+            if($arr[1]=='php'){
+                error_log("<?php \n return ".var_export($message, true)."\n", 3,$file);
+            }else{
+                error_log(var_export($message, true)."\n", 3,$file);
+            }
+        }else{
+            error_log($message."\n\n", 3,$file);
+        }
+    }
+
+
+
 }

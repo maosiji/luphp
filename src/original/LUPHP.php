@@ -26,6 +26,8 @@ class LUPHP {
      */
     public static function normalize_str_eol( string $str ):string
     {
+        if( empty($str) ) return '';
+
         return str_replace("\n", PHP_EOL, str_replace( ["\r\n", "\r"], "\n", $str ) );
     }
 

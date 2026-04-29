@@ -7,7 +7,7 @@
  * date                 : 2026-04-13 13:34
  * update               : 
  * project              : luphp
- * description          : 库操作结果统一返回类。约定：code=0 表示成功，非0表示失败。
+ * description          : API 结果统一返回类。约定：code=0 表示成功，非0表示失败。
  */
 
 namespace MAOSIJI\LU;
@@ -16,8 +16,8 @@ use JsonSerializable;
 class LUResult implements JsonSerializable
 {
     // ==================== 状态码常量 ====================
-    const CODE_SUCCESS = 0;          // 成功
-    const CODE_ERROR = 1;            // 通用错误（未分类）
+    const CODE_SUCCESS = 0;                             // 成功
+    const CODE_ERROR = 1;                               // 通用错误（未分类）
     const CODE_INVALID_PARAM = 1001;                    // 参数错误
     const CODE_FORBIDDEN = 1002;                        // 权限不足
     const CODE_NOT_FOUND = 1003;                        // 资源不存在
@@ -61,6 +61,25 @@ class LUResult implements JsonSerializable
     public static function error( int $code, string $msg, $data = null ): LUResult
     {
         return new self($code, $msg, $data);
+    }
+
+    /**
+     * 将异常转为统一错误结果
+     * @param \Throwable $e
+     * @return LUResult
+     */
+    public static function exception(\Throwable $e): LUResult {
+        return self::error($e->getCode() ?: self::CODE_ERROR, $e->getMessage());
+    }
+
+    /**
+     * 输出 JSON，并终止程序
+     */
+    public function sendJson()
+    {
+        header('Content-Type: application/json');
+        echo $this->toJson();
+        exit();
     }
 
     // ==================== 便捷判断与访问方法 ====================

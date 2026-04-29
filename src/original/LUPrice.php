@@ -8,44 +8,43 @@
  * update               :
  * project              : luphp
  */
+
 namespace MAOSIJI\LU;
 
-if (!class_exists('LUPrice')) {
-    class LUPrice
+class LUPrice
+{
+    /**
+     * 构造函数
+     */
+    public function __construct()
     {
-        /**
-         * 构造函数
-         */
-        public function __construct()
-        {
-            // 初始化逻辑（如果需要）
-        }
-        private function __clone()
-        {
-        }
-
-        /**
-         * 格式化价格为两位小数的字符串格式
-         *
-         * @param mixed $price 输入的价格值
-         * @return float 格式化后的价格（如：10.00）
-         */
-        public function format( $price ): float
-        {
-            // 检查输入是否为有效数字
-            if (!is_numeric($price)) { $price = 0.00; }
-
-            // 转换为浮点数并确保非负
-            $price = max(0.00, (float)$price);
-
-            // 确保最多保留两位小数，并向上取整到分
-            $price = ceil($price * 100) / 100;
-
-            // 格式化输出为两位小数的字符串
-            return sprintf("%.2f", $price);
-        }
-
-
-
+        // 初始化逻辑（如果需要）
     }
+    private function __clone()
+    {
+    }
+
+    /**
+     * 格式化价格为两位小数的字符串格式
+     *
+     * @param mixed $price 输入的价格值
+     * @return float 格式化后的价格（如：10.00）
+     */
+    public function format( $price ): float
+    {
+        // 检查输入是否为有效数字
+        if (!is_numeric($price)) { $price = 0.00; }
+
+        // 转换为浮点数并确保非负
+        $price = max(0.00, (float)$price);
+
+        // 确保最多保留两位小数，并向上取整到分
+        $price = ceil($price * 100) / 100;
+
+        // 格式化输出为两位小数的字符串
+        return sprintf("%.2f", $price);
+    }
+
+
+
 }

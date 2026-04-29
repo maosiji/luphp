@@ -7,13 +7,19 @@
     "autoload": {
         "psr-4": {
             "MAOSIJI\\LU\\": "src/original",
+            "MAOSIJI\\LU\\EXCEPTION": "src/exception",
             "MAOSIJI\\LU\\WP\\": "src/wordpress",
             "MAOSIJI\\LU\\WP\\SQL\\": "src/wordpress/sql"
-        }
+        },
+        "exclude-from-classmap": [
+            "src/original/LUSend.php",
+            "src/wordpress/LUWPSend.php",
+            "src/original/LUSession.php",
+            "src/original/LUSafe.php"
+        ]
     },
     "extra": {
-        "deprecated": {
-        }
+        "deprecated": {}
     },
     "authors": [
         {
@@ -29,6 +35,7 @@
         "ext-json": "*",
         "ext-curl": "*",
         "ext-ctype": "*",
-        "ext-openssl": "*"
+        "ext-openssl": "*",
+        "ext-fileinfo": "*"
     }
 }

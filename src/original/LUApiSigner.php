@@ -13,6 +13,9 @@
 
 namespace MAOSIJI\LU;
 
+use MAOSIJI\LU\EXCEPTION\LUApiSignerException;
+use MAOSIJI\LU\EXCEPTION\LURandomException;
+
 /**
  * Class LUApiSigner
  *
@@ -290,12 +293,13 @@ class LUApiSigner
      */
     private function _generateNonce( int $length = 16 ): string
     {
-        $return = (new LURandom())->generateSecureStr($length / 2 );
-        if ( $return->isSuccess() ) {
-            return $return->getData();
+        try {
+            $secureStr = (new LURandom())->generateSecureBytes($length / 2 );
+        } catch ( LURandomException $e ) {
+            throw new LUApiSignerException( '生成 nonce 失败：随机数不可用', LUApiSignerException::CODE_SYSTEM_ERROR, $e );
         }
 
-        return $return->getMsg();
+        return $secureStr;
     }
 
 }
