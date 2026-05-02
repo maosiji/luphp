@@ -5,18 +5,20 @@
 ## Exception
 
 | 类名 | 介绍         | 异常码前缀 |
-|:---|:-----------|:-----|
-|LURandom| 随机数        | 100  |
-|LUEncryptor| 加解密        | 200 |
-|LUFile| 文件上传       | 300 |
-|LUWPFile|WP文件上传|310|
-|LUApiSigner| API签名验证    | 400  |
-|LUIdcard| 身份证号码      | 500     |
-|LUIp| IP识别       | 600     |
-|LUVerifiableNumber19| 19位可验证数字生成 | 700     |
-|LUVerifiableString18|18位可验证字符串生成|710|
-|LUSession|session|800|
-|LUURL|url操作|900|
+|:---|:-----------|:------|
+|LURandom| 随机数        | 100   |
+|LUEncryptor| 加解密        | 110   |
+|LUIdcard| 身份证号码      | 120   |
+|LUIp| IP识别       | 130   |
+|LUVerifiableNumber19| 19位可验证数字生成 | 140   |
+|LUVerifiableString18|18位可验证字符串生成| 141   |
+|LUURL|url操作| 150   |
+|LUSession|session| 160   |
+|LUFile| 文件上传       | 300   |
+|LUWPFile|WP文件上传| 310   |
+|LUApiSigner| API签名验证    | 400   |
+|LUDBSQL|数据库|900|
+
 
 
 

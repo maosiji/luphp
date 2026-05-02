@@ -7,181 +7,165 @@
  * date                 : 2024-12-03 23:57
  * update               :
  * project              : luphp
+ *
+ * 数据查询语言（DQL）操作类
+ *
+ * 封装 SELECT 相关查询，统一使用 $wpdb->prepare 防止 SQL 注入。
  */
-/*
- * SELECT：用于检索数据库中的数据。
- * */
+
 namespace MAOSIJI\LU\WP\SQL;
-use MAOSIJI\LU\LUSend;
+
+use MAOSIJI\LU\EXCEPTION\LUDatabaseException;
 
 if ( ! defined( 'ABSPATH' ) ) { die; }
-if ( !class_exists('LUWPDQL') ) {
-    class LUWPDQL
+class LUWPDQL
+{
+    use LUWPSQLPublic;
+    function __construct()
     {
-        function __construct()
-        {
-        }
-        private function __clone()
-        {
-        }
-
-        /**
-         * 获取一列数据
-         * @param $tableNameNoPrefix    : 没有前缀的表名
-         * @param $col                  : 选择特定列，只能写一个。
-         * @param $sql                  : SQL语句
-         * @param $sqlFormat            : 格式数组
-         * @return array
-         */
-        public function get_col( string $tableNameNoPrefix, string $col, string $whereSQL, array $whereValue ): array
-        {
-            global $wpdb;
-            $table_name = $wpdb->prefix . $tableNameNoPrefix;
-            if ( $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") == $table_name ) {
-
-                if ( empty($whereValue) && empty($whereSQL) ) {
-                    $return = $wpdb->get_col("SELECT " . $col . " FROM " . $table_name );
-                }
-                if (!empty($whereValue) && !empty($whereSQL)) {
-                    $return = $wpdb->get_col($wpdb->prepare("SELECT " . $col . " FROM " . $table_name . $whereSQL, ...$whereValue));
-                }
-
-                // 失败
-                if ( $return===null ) {
-                    return (new LUSend())->send_array(0, 'col 查询失败', $return);
-                }
-
-                if ( count($return)===0 ) {
-                    return (new LUSend())->send_array(-1, 'col 未查询到', $return);
-                }
-
-                return (new LUSend())->send_array(1, 'col 已查询到', $return);
-            }
-
-            return (new LUSend())->send_array(0, 'col 未找到表 '.$table_name, '');
-        }
-
-        /**
-         * 获取聚合数据
-         * @param $tableNameNoPrefix    : 没有前缀的表名
-         * @param $colSql               : 聚合sql
-         * @param $sql                  : SQL语句
-         * @param $sqlFormat            : 格式数组
-         * @return array
-         */
-        public function get_var( string $tableNameNoPrefix, string $col, string $whereSQL, array $whereValue ): array
-        {
-            global $wpdb;
-            $table_name = $wpdb->prefix . $tableNameNoPrefix;
-            if ( $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") == $table_name ) {
-
-                if ( empty($whereValue) && empty($whereSQL) ) {
-                    $return = $wpdb->get_var("SELECT " . $col . " FROM " . $table_name );
-                }
-                if ( !empty($whereValue) && !empty($whereSQL) ) {
-                    $return = $wpdb->get_var($wpdb->prepare("SELECT " . $col . " FROM " . $table_name . $whereSQL, ...$whereValue));
-                }
-
-                // 失败
-                if ( $return===null ) {
-                    return (new LUSend())->send_array(0, 'var 查询失败', $return);
-                }
-
-                // 未查询到
-                if ( $return==='0' ) {
-                    return (new LUSend())->send_array(-1, 'var 未查询到', $return);
-                }
-
-                return (new LUSend())->send_array(1, 'var 已查询到', $return);
-            }
-
-            return (new LUSend())->send_array(0, 'var 未找到表 '.$table_name, '');
-        }
-
-        /**
-         * 获取一行数据
-         * @param $tableNameNoPrefix    : 没有前缀的表名
-         * @param $cols                 : 特定列或全部
-         * @param $sql                  : SQL语句
-         * @param $sqlFormat            : 格式数组
-         * @param $output               : 返回格式
-         * @return array
-         */
-        public function get_row( string $tableNameNoPrefix, string $cols, string $whereSQL, array $whereValue, string $output ): array
-        {
-            global $wpdb;
-            $table_name = $wpdb->prefix . $tableNameNoPrefix;
-            if ( $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") == $table_name ) {
-
-                if ( empty($whereValue) && empty($whereSQL) ) {
-                    $return = $wpdb->get_row( "SELECT ".$cols." FROM " . $table_name, $output );
-                }
-                if ( !empty($whereValue) && !empty($whereSQL) ){
-                    $return = $wpdb->get_row( $wpdb->prepare("SELECT ".$cols." FROM " . $table_name . $whereSQL, ...$whereValue), $output );
-                }
-
-                // 查询失败
-                if ( !empty($wpdb->last_error) ) {
-                    return (new LUSend())->send_array(0, 'row 查询失败', esc_html($wpdb->last_error) );
-                }
-
-                if ( $return===null ) {
-                    return (new LUSend())->send_array(-1, 'row 未查询到', $return);
-                }
-
-                return (new LUSend())->send_array(1, 'row 已查询到', $return);
-            }
-
-            return (new LUSend())->send_array(0, 'row 未找到表 '.$table_name, '');
-        }
-
-        /**
-         * 获取多行数据
-         * @param $tableNameNoPrefix        : 没有前缀的表名
-         * @param $cols                     : 特定列或全部
-         * @param $whereSQL                      : SQL语句
-         * @param array $whereValue         : 格式数组
-         * @param $output                   : 返回格式
-         * @return array
-         */
-        public function get_results( string $tableNameNoPrefix, string $cols, string $whereSQL, array $whereValue, string $output ): array
-        {
-            global $wpdb;
-            $table_name = $wpdb->prefix . $tableNameNoPrefix;
-            if ( $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") == $table_name ) {
-
-                if ( empty($whereValue) ) {
-                    $return = $wpdb->get_results( "SELECT " . $cols . " FROM " . $table_name, $output );
-                }
-                if ( !empty($whereValue) ) {
-                    $return = $wpdb->get_results($wpdb->prepare("SELECT " . $cols . " FROM " . $table_name . $whereSQL, ...$whereValue), $output);
-                }
-
-                // 查询失败
-                if ( !empty($wpdb->last_error) ) {
-                    return (new LUSend())->send_array(0, 'results 查询失败', esc_html($wpdb->last_error) );
-                }
-
-                if ( count($return)===0 ) {
-                    return (new LUSend())->send_array(-1, 'results 未查询到', $return);
-                }
-
-                return (new LUSend())->send_array(1, 'results 已查询到', $return);
-            }
-
-            return (new LUSend())->send_array(0, 'results 未找到表 '.$table_name, '');
-        }
-
-        /**
-         * $wpdb->query 未完成
-         * @return array
-         */
-        public function query()
-        {
-
-        }
-
-
-
     }
+    private function __clone()
+    {
+    }
+
+    /**
+     * 查询单列数据
+     *
+     * @param string $tableNameNoPrefix 表名（无前缀）
+     * @param string $columnName        要查询的列名
+     * @param string $whereSql          WHERE 子句（含占位符），如 " WHERE status = %s"
+     * @param array  $whereValues       绑定值数组
+     *
+     * @return array 列值数组，无结果时返回空数组
+     * @throws LUDatabaseException
+     */
+    public function getCol( string $tableNameNoPrefix, string $columnName, string $whereSql = '', array $whereValues = [] ): array
+    {
+        global $wpdb;
+        $tableName = $wpdb->prefix . $tableNameNoPrefix;
+        $this->checkTableExists($tableName);
+
+        if (empty($whereSql)) {
+            $results = $wpdb->get_col("SELECT $columnName FROM $tableName");
+        } else {
+            $prepared = $wpdb->prepare("SELECT $columnName FROM $tableName $whereSql", $whereValues);
+            $results = $wpdb->get_col($prepared);
+        }
+
+        if ($wpdb->last_error) {
+            throw new LUDatabaseException(
+                'getCol failed: ' . $wpdb->last_error,
+                LUDatabaseException::CODE_QUERY_FAILED
+            );
+        }
+
+        return is_array($results) ? $results : [];
+    }
+
+    /**
+     * 查询单个聚合值（COUNT、SUM、AVG 等）
+     *
+     * @param string $tableNameNoPrefix
+     * @param string $columnExpression   聚合表达式，如 "COUNT(*)" 或 "SUM(amount)"
+     * @param string $whereSql
+     * @param array  $whereValues
+     *
+     * @return string|null 查询结果（可能为 null）
+     * @throws LUDatabaseException
+     */
+    public function getVar( string $tableNameNoPrefix, string $columnExpression, string $whereSql = '', array $whereValues = [] )
+    {
+        global $wpdb;
+        $tableName = $wpdb->prefix . $tableNameNoPrefix;
+        $this->checkTableExists($tableName);
+
+        if (empty($whereSql)) {
+            $result = $wpdb->get_var("SELECT $columnExpression FROM $tableName");
+        } else {
+            $prepared = $wpdb->prepare("SELECT $columnExpression FROM $tableName $whereSql", $whereValues);
+            $result = $wpdb->get_var($prepared);
+        }
+
+        if ($wpdb->last_error) {
+            throw new LUDatabaseException(
+                'getVar failed: ' . $wpdb->last_error,
+                LUDatabaseException::CODE_QUERY_FAILED
+            );
+        }
+
+        return $result;
+    }
+
+    /**
+     * 查询单行数据
+     *
+     * @param string $tableNameNoPrefix
+     * @param string $columnsName          列名，'*' 或逗号分隔
+     * @param string $whereSql         WHERE 子句（含占位符）
+     * @param array  $whereValues
+     * @param string $output           返回格式：OBJECT|ARRAY_A|ARRAY_N，默认 ARRAY_A
+     *
+     * @return object|array|null 无记录时返回 null
+     * @throws LUDatabaseException
+     */
+    public function getRow( string $tableNameNoPrefix, string $columnsName, string $whereSql = '', array $whereValues = [], string $output = 'ARRAY_A' )
+    {
+        global $wpdb;
+        $tableName = $wpdb->prefix . $tableNameNoPrefix;
+        $this->checkTableExists($tableName);
+
+        if (empty($whereSql)) {
+            $row = $wpdb->get_row("SELECT $columnsName FROM $tableName", $output);
+        } else {
+            $prepared = $wpdb->prepare("SELECT $columnsName FROM $tableName $whereSql", $whereValues);
+            $row = $wpdb->get_row($prepared, $output);
+        }
+
+        if ($wpdb->last_error) {
+            throw new LUDatabaseException(
+                'getRow failed: ' . $wpdb->last_error,
+                LUDatabaseException::CODE_QUERY_FAILED
+            );
+        }
+
+        return $row;
+    }
+
+    /**
+     * 查询多行数据
+     *
+     * @param string $tableNameNoPrefix
+     * @param string $columnsName
+     * @param string $whereSql
+     * @param array  $whereValues
+     * @param string $output        OBJECT|ARRAY_A|ARRAY_N
+     *
+     * @return array  结果集数组，无记录时返回空数组
+     * @throws LUDatabaseException
+     */
+    public function getResults( string $tableNameNoPrefix, string $columnsName, string $whereSql = '', array $whereValues = [], string $output = 'ARRAY_A'): array
+    {
+        global $wpdb;
+        $tableName = $wpdb->prefix . $tableNameNoPrefix;
+        $this->checkTableExists($tableName);
+
+        if (empty($whereSql)) {
+            $results = $wpdb->get_results("SELECT $columnsName FROM $tableName", $output);
+        } else {
+            $prepared = $wpdb->prepare("SELECT $columnsName FROM $tableName $whereSql", $whereValues);
+            $results = $wpdb->get_results($prepared, $output);
+        }
+
+        if ($wpdb->last_error) {
+            throw new LUDatabaseException(
+                'getResults failed: ' . $wpdb->last_error,
+                LUDatabaseException::CODE_QUERY_FAILED
+            );
+        }
+
+        return is_array($results) ? $results : [];
+    }
+
+
+
 }

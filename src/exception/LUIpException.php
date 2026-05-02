@@ -16,7 +16,7 @@ class LUIpException extends LUBaseException
     /**
      * IP 地址获取失败
      * */
-    const CODE_GET_IP_FAILED = 600100;
+    const CODE_GET_IP_FAILED = 130100;
 
     public function __construct( string $message = "", int $code = 0, \Throwable $previous = null )
     {

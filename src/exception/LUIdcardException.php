@@ -23,7 +23,7 @@ class LUIdcardException extends LUBaseException
     /**
      * 系统环境不支持安全随机数
      * */
-    const CODE_INVALID_IDCARD = 500100;
+    const CODE_INVALID_IDCARD = 120100;
 
     private $idcard;
 

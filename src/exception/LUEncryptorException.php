@@ -23,15 +23,15 @@ class LUEncryptorException extends LUBaseException
     /**
      * 加密失败
      * */
-    const CODE_ENCRYPTION_FAILED = 200100;
+    const CODE_ENCRYPTION_FAILED = 110100;
     /**
      * 解密失败
      * */
-    const CODE_DECRYPTION_FAILED = 200101;
+    const CODE_DECRYPTION_FAILED = 110101;
     /**
      * 无效的加密数据
      **/
-    const CODE_INVALID_DATA = 200103;
+    const CODE_INVALID_DATA = 110103;
 
     /**
      * 加密数据

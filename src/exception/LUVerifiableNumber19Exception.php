@@ -16,17 +16,17 @@ class LUVerifiableNumber19Exception extends LUBaseException
     /**
      * 系统环境不支持安全随机数
      * */
-    const CODE_SYSTEM_ERROR = 700100;
+    const CODE_SYSTEM_ERROR = 140100;
 
     /**
      * 前缀必须是纯数字
      * */
-    const CODE_INVALID_PREFIX = 700101;
+    const CODE_INVALID_PREFIX = 140101;
 
     /**
      * 传入的19位号码不是有效字符串（长度不足/非全数字）
      * */
-    const CODE_INVALID_NUMBER = 700102;
+    const CODE_INVALID_NUMBER = 140102;
 
     private $numberChar;
 

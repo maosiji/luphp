@@ -16,17 +16,17 @@ class LUVerifiableString18Exception extends LUBaseException
     /**
      * 映射数组必须包含 11 个元素，分别对应数字 0~10
      * */
-    const CODE_MAP_COUNT_INVALID = 710100;
+    const CODE_MAP_COUNT_INVALID = 141100;
 
     /**
      * 映射数组必须按顺序包含 0~10 对应的单字符
      * */
-    const CODE_MAP_DUPLICATE_CHAR = 710101;
+    const CODE_MAP_DUPLICATE_CHAR = 141101;
 
     /**
      * 映射中的字符不可重复
      * */
-    const CODE_INVALID_NUMBER = 710102;
+    const CODE_INVALID_NUMBER = 141102;
 
     private $numberLetterMap;
 

@@ -16,7 +16,7 @@ class LUURLException extends LUBaseException
     /**
      * url不合法
      * */
-    const CODE_INVALID_URL = 900100;
+    const CODE_INVALID_URL = 150100;
 
     private $url;
 

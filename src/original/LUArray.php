@@ -22,6 +22,36 @@ class LUArray
     }
 
     /**
+     * 判断是否为二维数组
+     * @param mixed $array 待检测的变量
+     * @return bool
+     */
+    public function isTwoDimensionalArray( $array ): bool
+    {
+        // 1. 首先确保传入的是数组
+        if (!is_array($array)) {
+            return false;
+        }
+
+        // 2. 如果是空数组，通常不被视为有效的二维数组（视具体需求而定）
+        if (empty($array)) {
+            return false;
+        }
+
+        // 3. 遍历每个元素
+        foreach ($array as $element) {
+            // 如果有任何一个元素不是数组，则不是二维数组
+            if (!is_array($element)) {
+                return false;
+            }
+        }
+
+        // 4. 所有元素都是数组，则是二维数组
+        return true;
+    }
+
+
+    /**
      * 限制数组最多保留指定数量的元素，超出部分根据 limit 正负值方向截取，并控制是否保留原始键名
      *
      * @param array $array 要处理的数组

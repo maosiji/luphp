@@ -13,7 +13,7 @@ namespace MAOSIJI\LU\EXCEPTION;
 
 class LUSessionException extends LUBaseException
 {
-    const CODE_SESSION_EXPIRED = 800100;
+    const CODE_SESSION_EXPIRED = 160100;
     public function __construct( string $message = "", int $code = 0, \Throwable $previous = null )
     {
         parent::__construct($message, $code, $previous);
