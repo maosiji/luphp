@@ -26,10 +26,10 @@
             "name": "maosiji",
             "email": "1394846666@qq.com",
             "homepage": "https://www.maosiji.com",
-            "role": "野生程序员"
+            "role": "二维程序员"
         }
     ],
-    "minimum-stability": "dev",
+    "minimum-stability": "stable",
     "require": {
         "php": "^7.0",
         "ext-json": "*",
