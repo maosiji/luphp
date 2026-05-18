@@ -12,108 +12,204 @@
  *      提供流畅接口构建安全的查询条件，避免手动拼接数组容易出错的问题。
  *      支持 AND、OR、NOT 分组，自动生成占位符和参数绑定数组。
  *      format 参数必须显式传入，不再自动推断。
+ *      支持 ORDER BY 、 LIMIT / OFFSET 、 GROUP BY 、 HAVING（含分组）
+ *      不支持 联合查询 多表连接 子查询
  */
 
 namespace MAOSIJI\LU\WP\SQL;
 
 class LUWPSQLWhereCondition
 {
-    private $nodes = [];
+    private $nodes       = [];
+    private $havingNodes = [];
+    private $orderBy     = [];
+    private $groupBy     = [];
+    private $limit       = null;
+    private $offset      = 0;
 
-    /**
-     * 添加一个 AND 条件
-     *
-     * @param string $column   字段名
-     * @param string $operator 运算符：=, >, <, >=, <=, <>, !=, LIKE, BETWEEN, IN, NOT IN 等
-     * @param mixed  $value    值。BETWEEN 时传 [min, max]，IN/NOT IN 时传数组
-     * @param string|array $format 占位符格式，如 '%s', '%d', '%f'。
-     *                              普通运算符传字符串；BETWEEN 传两个元素的数组；
-     *                              IN/NOT IN 可传统一占位符字符串或与值一一对应的数组。
-     * @return $this
-     */
+    // =========================== WHERE 条件方法 ===========================
+
     public function and(string $column, string $operator, $value, $format): self
     {
-        return $this->condition('AND', $column, $operator, $value, $format);
+        $this->addConditionTo($this->nodes, 'AND', $column, $operator, $value, $format);
+        return $this;
     }
 
-    /**
-     * 添加一个 OR 条件
-     *
-     * @param string $column
-     * @param string $operator
-     * @param mixed  $value
-     * @param string|array $format
-     * @return $this
-     */
     public function or(string $column, string $operator, $value, $format): self
     {
-        return $this->condition('OR', $column, $operator, $value, $format);
+        $this->addConditionTo($this->nodes, 'OR', $column, $operator, $value, $format);
+        return $this;
     }
 
-    /**
-     * 添加一个 AND 分组（括号）
-     *
-     * @param callable $callback 接收新的 WhereCondition 实例
-     * @return $this
-     */
     public function andGroup(callable $callback): self
     {
-        return $this->groupInternal('AND', false, $callback);
+        $this->addGroupTo($this->nodes, 'AND', false, $callback);
+        return $this;
     }
 
-    /**
-     * 添加一个 OR 分组（括号）
-     *
-     * @param callable $callback
-     * @return $this
-     */
     public function orGroup(callable $callback): self
     {
-        return $this->groupInternal('OR', false, $callback);
+        $this->addGroupTo($this->nodes, 'OR', false, $callback);
+        return $this;
     }
 
-    /**
-     * 添加一个 AND NOT 分组（括号前带 NOT）
-     *
-     * @param callable $callback
-     * @return $this
-     */
     public function andNotGroup(callable $callback): self
     {
-        return $this->groupInternal('AND', true, $callback);
+        $this->addGroupTo($this->nodes, 'AND', true, $callback);
+        return $this;
     }
 
-    /**
-     * 添加一个 OR NOT 分组（括号前带 NOT，并用 OR 连接前面的条件）
-     *
-     * @param callable $callback
-     * @return $this
-     */
     public function orNotGroup(callable $callback): self
     {
-        return $this->groupInternal('OR', true, $callback);
+        $this->addGroupTo($this->nodes, 'OR', true, $callback);
+        return $this;
+    }
+
+    // =========================== HAVING 条件方法 ===========================
+
+    /**
+     * 添加一个 HAVING 条件（AND 逻辑）
+     */
+    public function having(string $column, string $operator, $value, $format): self
+    {
+        $this->addConditionTo($this->havingNodes, 'AND', $column, $operator, $value, $format);
+        return $this;
     }
 
     /**
-     * 构建最终的 SQL 片段和参数数组
-     *
-     * @return array ['sql' => string, 'values' => array]
+     * 添加一个 HAVING 条件（OR 逻辑）
      */
-    public function build(): array
+    public function orHaving(string $column, string $operator, $value, $format): self
     {
-        if (empty($this->nodes)) {
-            return ['sql' => '', 'values' => []];
-        }
-
-        return $this->buildNodes($this->nodes);
+        $this->addConditionTo($this->havingNodes, 'OR', $column, $operator, $value, $format);
+        return $this;
     }
 
-    //------------------------- 内部实现 -------------------------
+    /**
+     * 添加 HAVING AND 分组（括号）
+     */
+    public function havingGroup(callable $callback): self
+    {
+        $this->addGroupTo($this->havingNodes, 'AND', false, $callback);
+        return $this;
+    }
 
-    private function condition(string $logic, string $column, string $operator, $value, $format): self
+    /**
+     * 添加 HAVING OR 分组
+     */
+    public function orHavingGroup(callable $callback): self
+    {
+        $this->addGroupTo($this->havingNodes, 'OR', false, $callback);
+        return $this;
+    }
+
+    /**
+     * 添加 HAVING AND NOT 分组
+     */
+    public function havingNotGroup(callable $callback): self
+    {
+        $this->addGroupTo($this->havingNodes, 'AND', true, $callback);
+        return $this;
+    }
+
+    /**
+     * 添加 HAVING OR NOT 分组
+     */
+    public function orHavingNotGroup(callable $callback): self
+    {
+        $this->addGroupTo($this->havingNodes, 'OR', true, $callback);
+        return $this;
+    }
+
+    // =========================== 排序 / 分页 / 分组 ===========================
+
+    public function orderBy(string $column, string $direction = 'ASC'): self
+    {
+        $direction = strtoupper($direction);
+        if (!in_array($direction, ['ASC', 'DESC'], true)) {
+            throw new \InvalidArgumentException('Order direction must be ASC or DESC.');
+        }
+        $column = preg_replace('/[^a-zA-Z0-9_\.]/', '', $column);
+        $this->orderBy[] = "{$column} {$direction}";
+        return $this;
+    }
+
+    public function groupBy(string $column): self
+    {
+        $column = preg_replace('/[^a-zA-Z0-9_]/', '', $column);
+        $this->groupBy[] = $column;
+        return $this;
+    }
+
+    public function limit(int $limit, int $offset = 0): self
+    {
+        $this->limit  = max(0, $limit);
+        $this->offset = max(0, $offset);
+        return $this;
+    }
+
+    public function offset(int $offset): self
+    {
+        $this->offset = max(0, $offset);
+        return $this;
+    }
+
+    // =========================== 构建方法 ===========================
+
+    public function build(): array
+    {
+        // WHERE
+        $whereResult = $this->buildClauseSQL($this->nodes);
+        $whereSql = !empty($whereResult['sql']) ? ' WHERE ' . $whereResult['sql'] : '';
+        $values   = $whereResult['values'];
+
+        // GROUP BY
+        $groupSql = '';
+        if (!empty($this->groupBy)) {
+            $groupSql = ' GROUP BY ' . implode(', ', $this->groupBy);
+        }
+
+        // HAVING
+        $havingSql = '';
+        if (!empty($this->havingNodes)) {
+            $havingResult = $this->buildClauseSQL($this->havingNodes);
+            if (!empty($havingResult['sql'])) {
+                $havingSql = ' HAVING ' . $havingResult['sql'];
+                $values = array_merge($values, $havingResult['values']);
+            }
+        }
+
+        // ORDER BY
+        $orderSql = '';
+        if (!empty($this->orderBy)) {
+            $orderSql = ' ORDER BY ' . implode(', ', $this->orderBy);
+        }
+
+        // LIMIT / OFFSET
+        $limitSql = '';
+        if ($this->limit !== null) {
+            $limitSql = ' LIMIT %d';
+            $values[] = $this->limit;
+            if ($this->offset > 0) {
+                $limitSql .= ' OFFSET %d';
+                $values[] = $this->offset;
+            }
+        }
+
+        $sql = $whereSql . $groupSql . $havingSql . $orderSql . $limitSql;
+
+        return [
+            'sql'    => $sql,
+            'value'  => $values,
+        ];
+    }
+
+    // =========================== 内部实现 ===========================
+
+    private function addConditionTo(array &$target, string $logic, string $column, string $operator, $value, $format)
     {
         $op = strtoupper($operator);
-        $this->nodes[] = [
+        $target[] = [
             'type'     => 'condition',
             'logic'    => $logic,
             'column'   => $column,
@@ -121,28 +217,30 @@ class LUWPSQLWhereCondition
             'value'    => $value,
             'format'   => $format,
         ];
-        return $this;
     }
 
-    private function groupInternal(string $logic, bool $not, callable $callback): self
+    private function addGroupTo(array &$target, string $logic, bool $not, callable $callback)
     {
         $sub = new self();
         $callback($sub);
         if (!empty($sub->nodes)) {
-            $this->nodes[] = [
+            $target[] = [
                 'type'     => 'group',
                 'logic'    => $logic,
                 'not'      => $not,
                 'children' => $sub->nodes,
             ];
         }
-        return $this;
     }
 
-    private function buildNodes(array $nodes, bool $outer = true): array
+    /**
+     * 将节点数组转换为不带关键字的 SQL 条件片段和参数
+     * @return array ['sql' => string, 'values' => array]
+     */
+    private function buildClauseSQL(array $nodes): array
     {
-        $parts  = [];
-        $values = [];
+        $parts   = [];
+        $values  = [];
         $isFirst = true;
 
         foreach ($nodes as $node) {
@@ -151,19 +249,19 @@ class LUWPSQLWhereCondition
                 if ($condition === null) {
                     continue;
                 }
-                $prefix = $isFirst ? ($outer ? ' WHERE ' : '') : (' ' . $node['logic'] . ' ');
+                $prefix = $isFirst ? '' : (' ' . $node['logic'] . ' ');
                 $parts[] = $prefix . $condition['sql'];
                 $values = array_merge($values, $condition['values']);
                 $isFirst = false;
             } elseif ($node['type'] === 'group') {
-                $groupResult = $this->buildNodes($node['children'], false);
+                // 递归构建子分组（不带关键字）
+                $groupResult = $this->buildClauseSQL($node['children']);
                 if (empty($groupResult['sql'])) {
                     continue;
                 }
-                $innerSql = preg_replace('/^\s*WHERE\s+/i', '', $groupResult['sql']);
                 $notPrefix = $node['not'] ? 'NOT ' : '';
-                $prefix = $isFirst ? ($outer ? ' WHERE ' : '') : (' ' . $node['logic'] . ' ');
-                $parts[] = $prefix . $notPrefix . '(' . $innerSql . ')';
+                $prefix = $isFirst ? '' : (' ' . $node['logic'] . ' ');
+                $parts[] = $prefix . $notPrefix . '(' . $groupResult['sql'] . ')';
                 $values = array_merge($values, $groupResult['values']);
                 $isFirst = false;
             }
@@ -175,10 +273,6 @@ class LUWPSQLWhereCondition
         ];
     }
 
-    /**
-     * 构建单个条件的 SQL 片段和值
-     * @return array|null
-     */
     private function buildCondition(array $node)
     {
         $column   = $node['column'];
@@ -195,22 +289,17 @@ class LUWPSQLWhereCondition
             case 'IN':
             case 'NOT IN':
                 LUWPSQLParamValidator::inAndNotin($value, $format);
-                // 兼容 format 为统一字符串或与 value 等长的数组
                 if (is_array($format)) {
                     $placeholders = $format;
                 } else {
-                    // 统一占位符
                     $placeholders = array_fill(0, count($value), $format);
                 }
                 $inStr = implode(',', $placeholders);
                 $sql = "$column $operator ($inStr)";
-                // values 保持原始顺序，与占位符一一对应
                 return ['sql' => $sql, 'values' => array_values($value)];
 
             default:
-                // 普通比较运算符
-                LUWPSQLParamValidator::formatIsString($format);
-
+                LUWPSQLParamValidator::format($format);
                 $sql = "$column $operator $format";
                 return ['sql' => $sql, 'values' => [$value]];
         }
@@ -381,22 +470,53 @@ class LUWPSQLWhereCondition
 // sql    : ''
 // values : []
 
-/*
- * 示例 14：错误处理 —— BETWEEN 的 format 不是数组
- */
-//try {
-//    $where = (new LUWPSQLWhereCondition())
-//        ->and('col', 'BETWEEN', [1, 2], '%d');  // 应抛异常
-//} catch (\InvalidArgumentException $e) {
-//    echo $e->getMessage();  // "BETWEEN requires format as an array of two placeholder strings..."
-//}
+//// 带 ORDER BY 和 LIMIT
+//$where = (new LUWPSQLWhereCondition())
+//    ->and('status', '=', 'published', '%s')
+//    ->orderBy('post_date', 'DESC')
+//    ->orderBy('id', 'ASC')
+//    ->limit(10, 5);   // LIMIT 10 OFFSET 5
+//
+//$result = $where->build();
+//// 按 status 筛选出特定状态的记录，先按发布日期倒序、相同日期再按 id 正序排列，然后分页取指定范围的行（跳过若干条，取若干条）。
+//// $result['sql']    => " WHERE status = %s ORDER BY post_date DESC, id ASC LIMIT %d OFFSET %d"
+//// $result['values'] => ['published', 10, 5]
 
-/*
- * 示例 15：错误处理 —— IN 的 format 数组长度不匹配
- */
-//try {
-//    $where = (new LUWPSQLWhereCondition())
-//        ->and('id', 'IN', [1, 2, 3], ['%d', '%d']); // 长度不匹配
-//} catch (\InvalidArgumentException $e) {
-//    echo $e->getMessage();
-//}
+//// 无 WHERE 只有排序和分页
+//$where2 = (new LUWPSQLWhereCondition())
+//    ->orderBy('name')
+//    ->limit(20);
+//$r2 = $where2->build();
+//// sql    : " ORDER BY name ASC LIMIT %d"
+//// values : [20]
+
+//$where = (new LUWPSQLWhereCondition())
+//    ->and('status', '=', 'published', '%s')
+//    ->groupBy('gender')
+//    ->orderBy('post_date', 'DESC')
+//    ->limit(10, 5);
+//
+//$result = $where->build();
+//// 筛选出状态为指定字符串的记录，按性别分组，按发布日期降序排列，然后分页取第 6 ~ 15 条结果
+//// sql    : " WHERE status = %s GROUP BY gender ORDER BY post_date DESC LIMIT %d OFFSET %d"
+//// values : ['published', 10, 5]
+
+//// 基本 HAVING 用法：统计每个分类下文章数，只保留大于5的分类
+//$where = (new LUWPSQLWhereCondition())
+//    ->and('post_type', '=', 'post', '%s')
+//    ->groupBy('category_id')
+//    ->having('COUNT(*)', '>', 5, '%d')
+//    ->orderBy('category_id');
+//$result = $where->build();
+//// sql    : " WHERE post_type = %s GROUP BY category_id HAVING COUNT(*) > %d ORDER BY category_id ASC"
+//// values : ['post', 5]
+
+// 复杂 HAVING 分组：同时筛选两个聚合条件
+//$where = new LUWPSQLWhereCondition();
+//$where->groupBy('author_id')
+//    ->having('COUNT(*)', '>=', 10, '%d')
+//    ->orHavingGroup(function ($sub) {
+//        $sub->having('SUM(view_count)', '>', 1000, '%d')
+//            ->having('AVG(rating)', '>=', 4.5, '%f');
+//    });
+//// 结果: " GROUP BY author_id HAVING COUNT(*) >= %d OR (SUM(view_count) > %d AND AVG(rating) >= %f)"

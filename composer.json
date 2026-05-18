@@ -10,6 +10,9 @@
             "MAOSIJI\\LU\\WP\\": "src/wordpress",
             "MAOSIJI\\LU\\WP\\SQL\\": "src/wordpress/sql"
         },
+        "files":[
+            "src/compat/up.php"
+        ],
         "exclude-from-classmap": [
             "src/original/LUSend.php",
             "src/wordpress/LUWPSend.php",

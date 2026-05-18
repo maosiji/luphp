@@ -13,211 +13,151 @@
 namespace MAOSIJI\LU\WP\SQL;
 use MAOSIJI\LU\EXCEPTION\LUDatabaseException;
 use MAOSIJI\LU\LUArray;
+use MAOSIJI\LU\LUResult;
 
 class LUWPSQLParamValidator
 {
+    /**
+     * 检测表名是否有效
+     *
+     * @param string $tableName
+     * @return LUResult
+     */
+    public static function tableName( string $tableName ): LUResult
+    {
+        if ( !preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $tableName) ) {
+            return LUResult::error( 1000, '表名只能由字母、数字和下划线组成，且不能以数字开头', [
+                'table_name'  => $tableName
+            ]);
+        }
+
+        return LUResult::success([
+            'table_name'    => $tableName
+        ], '表名 检测通过');
+    }
+
+    public static function columnName( string $columnName ): LUResult
+    {
+        if ( ! preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $columnName) ) {
+            return LUResult::error(1001, '无效的列名', ['column_name' => $columnName]);
+        }
+
+        return LUResult::success([
+            'column_name'    => $columnName
+        ], '列名 检测通过');
+    }
+
     private static $allowFormat = ['%s', '%d', '%f'];
 
-    /**
-     * 检测去掉空格的没有前缀的表名是否为空，若不，则返回去掉前后空格的表名
-     *
-     * 不能为空，只能包含数字和字母。
-     *
-     * @param $tableNameNoPrefix
-     */
-    public static function tableNameNoPrefix( $tableNameNoPrefix )
+    public static function paramFormat( $param, $format ): LUResult
     {
-        if ( !is_string($tableNameNoPrefix) ) {
-            throw new LUDatabaseException(
-            //'table name not empty',
-                '表名（无前缀）必须是字符串',
-                LUDatabaseException::CODE_INVALID_TABLE_NAME
-            );
+        $validFormat = LUWPSQLParamValidator::format($format);
+        if ( $validFormat->isError() ) {
+            return $validFormat;
         }
-
-        if ($tableNameNoPrefix==='') {
-            throw new LUDatabaseException(
-                //'table name not empty',
-                '表名（无前缀）不能为空',
-                LUDatabaseException::CODE_INVALID_TABLE_NAME
-            );
-        }
-
-        if ( !ctype_alnum($tableNameNoPrefix) ) {
-            throw new LUDatabaseException(
-            //'table name not empty',
-                '表名（无前缀）只能由字母和数字组成',
-                LUDatabaseException::CODE_INVALID_TABLE_NAME
-            );
-        }
-    }
-
-    public static function tableName( $tableName )
-    {
-        if ( !is_string($tableName) ) {
-            throw new LUDatabaseException(
-            //'table name not empty',
-                '表名 必须是字符串',
-                LUDatabaseException::CODE_INVALID_TABLE_NAME
-            );
-        }
-
-        if ($tableName==='') {
-            throw new LUDatabaseException(
-            //'table name not empty',
-                '表名 不能为空',
-                LUDatabaseException::CODE_INVALID_TABLE_NAME
-            );
-        }
-    }
-
-    public static function sql( $sql )
-    {
-        if ( !is_string($sql) ) {
-            throw new LUDatabaseException(
-                'SQL 语句必须是字符串',
-                LUDatabaseException::CODE_INVALID_SQL
-            );
-        }
-
-        if ( $sql==='' ) {
-            throw new LUDatabaseException(
-                'SQL 语句不能为空',
-                LUDatabaseException::CODE_INVALID_SQL
-            );
-        }
-    }
-
-    public static function paramFormat( $param, $format )
-    {
-        LUWPSQLParamValidator::format($format);
 
         if ( !is_array($param) || !is_array($format) ) {
-            throw new LUDatabaseException(
-                '参数 param 和 format 必须是数组',
-                LUDatabaseException::CODE_INVALID_PARAM,
-                null,
-                [
-                    "param"  => $param,
-                    "format" => $format
-                ]
-            );
+            return LUResult::error( 1000, '参数 param 和 format 必须是数组', [
+                "param"  => $param,
+                "format" => $format
+            ]);
         }
 
         if ( count($param)===0 || count($format)===0 ) {
-            throw new LUDatabaseException(
-                '值数组或占位符数组不能为空数组',
-                LUDatabaseException::CODE_INVALID_PARAM,
-                null,
-                [
-                    "param"  => $param,
-                    "format" => $format
-                ]
-            );
+            return LUResult::error( 1000, '值数组或占位符数组不能为空数组', [
+                "param"  => $param,
+                "format" => $format
+            ]);
         }
 
         if (count($param) !== count($format)) {
-            throw new LUDatabaseException(
-                '数据字段数量与占位符数量不一致',
-                LUDatabaseException::CODE_INVALID_PARAM,
-                null,
-                [
-                    "param" => $param,
-                    "format" => $format
-                ]
-            );
+            return LUResult::error( 1000, '数据字段数量与占位符数量不一致', [
+                "param" => $param,
+                "format" => $format
+            ]);
         }
+
+        return LUResult::success([
+            "param" => $param,
+            "format" => $format
+        ], '检测通过');
     }
 
-    public static function rowParamFormat( $rowParam, $format )
+    public static function rowParamFormat( $rowParam, $format ): LUResult
     {
-        LUWPSQLParamValidator::format($format);
+        $validFormat = LUWPSQLParamValidator::format($format);
+        if ( $validFormat->isError() ) {
+            return $validFormat;
+        }
 
         if ( !(new LUArray())->isTwoDimensionalArray($rowParam) ) {
-            throw new LUDatabaseException(
-                'rowParam 必须是二维数组',
-                LUDatabaseException::CODE_INVALID_PARAM,
-                null,
-                [
-                    "row_param" => $rowParam,
-                    "format" => $format
-                ]
-            );
+            return LUResult::error( 1000, 'rowParam 必须是二维数组', [
+                "row_param" => $rowParam,
+                "format" => $format
+            ]);
         }
 
         if ( !is_array($format) ) {
-            throw new LUDatabaseException(
-                '参数 format 必须是数组',
-                LUDatabaseException::CODE_INVALID_PARAM,
-                null,
-                [
-                    "row_param" => $rowParam,
-                    "format" => $format
-                ]
-            );
+            return LUResult::error( 1000, '参数 format 必须是数组', [
+                "row_param" => $rowParam,
+                "format" => $format
+            ]);
         }
 
         if ( count($rowParam)===0 || count($format)===0 ) {
-            throw new LUDatabaseException(
-                '值数组或占位符数组不能为空数组',
-                LUDatabaseException::CODE_INVALID_PARAM,
-                null,
-                [
-                    "row_param" => $rowParam,
-                    "format" => $format
-                ]
-            );
+            return LUResult::error( 1000, '值数组或占位符数组不能为空数组', [
+                "row_param" => $rowParam,
+                "format" => $format
+            ]);
         }
 
         foreach ( $rowParam as $rp ) {
             if ( count($rp) !== count($format) ) {
-                throw new LUDatabaseException(
-                    '参数 rowParam 和 参数 format 不匹配',
-                    LUDatabaseException::CODE_INVALID_PARAM,
-                    null,
-                    [
-                        "row_param" => $rowParam,
-                        "format" => $format
-                    ]
-                );
+                return LUResult::error( 1000, '参数 rowParam 和 参数 format 不匹配', [
+                    "row_param" => $rowParam,
+                    "format" => $format
+                ]);
             }
         }
-    }
 
+        return LUResult::success([
+            "row_param" => $rowParam,
+            "format" => $format
+        ], '检测通过');
+    }
 
     /**
      * 检查 BETWEEN 语句的值和占位符
      *
      * @param $param
      * @param $format
+     * @return LUResult
      */
-    public static function between( $param, $format )
+    public static function between( $param, $format ): LUResult
     {
-        LUWPSQLParamValidator::format($format);
+        $validFormat = LUWPSQLParamValidator::format($format);
+        if ( $validFormat->isError() ) {
+            return $validFormat;
+        }
 
         if ( !is_array($param) || !is_array($format) ) {
-            throw new LUDatabaseException(
-                '参数 param 和 format 必须是数组',
-                LUDatabaseException::CODE_INVALID_PARAM,
-                null,
-                [
-                    "param"  => $param,
-                    "format" => $format
-                ]
-            );
+            return LUResult::error( 1000, '参数 param 和 format 必须是数组', [
+                "param"  => $param,
+                "format" => $format
+            ]);
         }
 
         if ( count($param) !== 2 || count($format) !== 2 ) {
-            throw new LUDatabaseException(
-                '参数 param 和 format 必须是两个元素的数组',
-                LUDatabaseException::CODE_INVALID_PARAM,
-                null,
-                [
-                    "param"  => $param,
-                    "format" => $format
-                ]
-            );
+            return LUResult::error( 1000, '参数 param 和 format 必须是两个元素的数组', [
+                "param"  => $param,
+                "format" => $format
+            ]);
         }
+
+        return LUResult::success([
+            "param"  => $param,
+            "format" => $format
+        ], '检测通过');
     }
 
     /**
@@ -225,111 +165,71 @@ class LUWPSQLParamValidator
      *
      * @param $param :可以是数组，也可以是单个的值
      * @param $format :可以是数组，也可以是单个的占位符
+     * @return LUResult
      */
-    public static function inAndNotin( $param, $format )
+    public static function inAndNotin( $param, $format ): LUResult
     {
-        LUWPSQLParamValidator::format($format);
+        $validFormat = LUWPSQLParamValidator::format($format);
+        if ( $validFormat->isError() ) {
+            return $validFormat;
+        }
 
         if ( !is_array($param) || count($param)===0 ) {
-            throw new LUDatabaseException(
-                'IN 和 NOT IN 的参数必须是非空数组',
-                LUDatabaseException::CODE_INVALID_PARAM,
-                null,
-                [
-                    "param"  => $param,
-                    "format" => $format
-                ]
-            );
+            return LUResult::error( 1000, 'IN 和 NOT IN 的参数必须是非空数组', [
+                "param"  => $param,
+                "format" => $format
+            ]);
         }
 
         if ( is_array($format) && count($format)!==count($param) ) {
-            throw new LUDatabaseException(
-                '如果 format 是占位符数组，那么其长度必须和参数 param 的长度一致',
-                LUDatabaseException::CODE_INVALID_PARAM,
-                null,
-                [
-                    "param"  => $param,
-                    "format" => $format
-                ]
-            );
+            return LUResult::error( 1000, '如果 format 是占位符数组，那么其长度必须和参数 param 的长度一致', [
+                "param"  => $param,
+                "format" => $format
+            ]);
         }
+
+        return LUResult::success([
+            "param"  => $param,
+            "format" => $format
+        ], '检测通过');
     }
 
     /**
      * 检查 format 是否是 %s %d %f 中的一个
      *
      * @param array|string $format :可能是单个占位符，也可能是占位符数组
+     * @return LUResult
      * */
-    public static function format( $format )
+    public static function format( $format ): LUResult
     {
-        if ($format==='') {
-            throw new LUDatabaseException(
-                'format 参数不能为空',
-                LUDatabaseException::CODE_INVALID_PARAM,
-                null,
-                [
-                    "format" => $format
-                ]
-            );
+        if ( !is_array($format) ) {
+
+            if ($format==='') {
+                return LUResult::error( 1000, 'format 参数不能为空', [
+                    'format'    => $format
+                ]);
+            }
+
+            if ( !in_array($format, self::$allowFormat) ) {
+                return LUResult::error( 1000, 'format 参数必须是 %s %d %f 中的一个', [
+                    'format'    => $format
+                ]);
+            }
+
         }
 
         if ( is_array($format) ) {
             foreach ( $format as $f ) {
-                if ( !in_array($f, self::$allowFormat) ) {
-                    throw new LUDatabaseException(
-                        'format 参数必须是 %s %d %f 中的一个',
-                        LUDatabaseException::CODE_INVALID_PARAM,
-                        null,
-                        [
-                            "format" => $format,
-                        ]
-                    );
-                }
+                self::format( $f );
             }
         }
-        else {
-            if ( !in_array($format, self::$allowFormat) ) {
-                throw new LUDatabaseException(
-                    'format 参数必须是 %s %d %f 中的一个',
-                    LUDatabaseException::CODE_INVALID_PARAM,
-                    null,
-                    [
-                        "format" => $format,
-                    ]
-                );
-            }
-        }
+
+        return LUResult::success([
+            'format'    => $format
+        ], '检测通过');
     }
 
-    /**
-     * 检查 format 是否是字符串，且是 %s %d %f 中的一个
-     *
-     * @param $format
-     */
-    public static function formatIsString( $format )
-    {
-        if( !is_string($format) ) {
-            throw new LUDatabaseException(
-                'format 必须是字符串',
-                LUDatabaseException::CODE_INVALID_PARAM,
-                null,
-                [
-                    "format" => $format
-                ]
-            );
-        }
 
-        if ( !in_array($format, self::$allowFormat) ) {
-            throw new LUDatabaseException(
-                'format 参数必须是 %s %d %f 中的一个',
-                LUDatabaseException::CODE_INVALID_PARAM,
-                null,
-                [
-                    "format" => $format,
-                ]
-            );
-        }
-    }
 
 
 

@@ -297,7 +297,8 @@ class LUArray
      * @param mixed $default 默认占位符
      * @return array 占位符数组
      */
-    public function generate_placeholder_array( array $data, array $typeMap, $default = '%s' ) {
+    public function generate_placeholder_array( array $data, array $typeMap, $default = '%s' ): array
+    {
         $result = [];
 
         foreach ($data as $key => $value) {

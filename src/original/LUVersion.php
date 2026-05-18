@@ -29,7 +29,7 @@ class LUVersion
      *  			 版本号格式一：10.0
      *  			 版本号格式一：10
      */
-    public function is_version( string $version ): bool
+    public function isVersion( string $version ): bool
     {
         // 1. 去除首尾空格，防止 " 1.0 " 这种输入导致误判
         $version = trim($version);

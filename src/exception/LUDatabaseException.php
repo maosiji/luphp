@@ -57,8 +57,10 @@ class LUDatabaseException extends LUBaseException
         );
     }
 
-    public function getContext(): string
+    public function getContext(): array
     {
         return $this->context;
     }
+
+
 }

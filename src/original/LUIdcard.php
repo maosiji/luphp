@@ -667,5 +667,43 @@ class LUIdcard
         return substr($idcard, 0, 4);
     }
 
+    /**
+     * 随机生成一个合法的身份证号码
+     * @return string
+     */
+    public function random(): string
+    {
+        // 1. 地址码：随机选择一个城市代码（4位） + 随机2位区县码
+        $cityCodes = array_keys($this->cityMap);
+        $cityCode = $cityCodes[array_rand($cityCodes)];
+        $districtCode = str_pad(rand(0, 99), 2, '0', STR_PAD_LEFT);
+        $addressCode = $cityCode . $districtCode; // 6位
+
+        // 2. 出生日期：随机生成 18～80 岁之间的有效日期
+        $currentYear = (int)date('Y');
+        $minYear = $currentYear - 80;
+        $maxYear = $currentYear - 18;
+        $year = rand($minYear, $maxYear);
+        $month = rand(1, 12);
+        $maxDay = (int)date('t', strtotime("{$year}-{$month}-01"));
+        $day = rand(1, $maxDay);
+        $birthday = sprintf('%04d%02d%02d', $year, $month, $day);
+
+        // 3. 顺序码：3位随机数字
+        $sequence = str_pad(rand(0, 999), 3, '0', STR_PAD_LEFT);
+
+        // 4. 组合前17位，计算校验码
+        $id17 = $addressCode . $birthday . $sequence;
+        $factor = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
+        $map = ['1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2'];
+        $sum = 0;
+        for ($i = 0; $i < 17; $i++) {
+            $sum += (int)$id17[$i] * $factor[$i];
+        }
+        $checkCode = $map[$sum % 11];
+
+        return $id17 . $checkCode;
+    }
+
 
 }

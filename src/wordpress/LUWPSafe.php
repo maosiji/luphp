@@ -28,29 +28,29 @@ class LUWPSafe
     /**
      * 检查请求频率，支持独立操作限流、自定义错误，双模式输出
      *
-     * @param int    $timediff     冷却时间（秒），默认 3
-     * @param bool   $auto__bail    超限时是否自动终止（默认 true）
-     *                            true  => 直接终止（无返回）
-     *                            false => 返回 bool（true=受限，false=放行）
-     * @param string $action_key   操作标识（如 'send_sms', 'submit_form'），用于不同操作独立限流
-     *                             留空则全局共用限流
-     * @param string $error_message 自动终止时的自定义错误消息（支持 HTML）
-     *                             仅当 $auto__bail = true 时使用
+     * @param int    $timediff      冷却时间（秒），默认 3
+     * @param string $actionKey     操作标识（如 'send_sms', 'submit_form'），用于不同操作独立限流
+     *                              留空则全局共用限流
+     * @param bool   $autoStop      超限时是否自动终止（默认 true）
+     *                                  true  => 直接终止（无返回）
+     *                                  false => 返回 bool（true=受限，false=放行）
+     * @param string $errorMessage 自动终止时的自定义错误消息（支持 HTML）
+     *                             仅当 $autoStop = true 时使用
      *
-     * @return bool|null           $auto__bail=false 时返回 bool，否则无返回
+     * @return bool|null           $autoStop=false 时返回 bool，否则无返回
      */
     public function checkTooManyRequests(
         int $timediff     = self::DEFAULT_TIME_INTERVAL,
-        bool $auto__bail    = true,
-        string $action_key   = '',
-        string $error_message = ''
+        string $actionKey   = '',
+        bool $autoStop    = true,
+        string $errorMessage = ''
     ) {
         $identifier    = $this->_getIdentifier();
-        $transient_key = 'luwpsafe_rate_' . md5( $identifier . $action_key );
+        $transient_key = 'luwpsafe_rate_' . md5( $identifier . $actionKey );
 
         if ( get_transient( $transient_key ) ) {
-            if ( $auto__bail ) {
-                $this->_bail( $error_message );
+            if ( $autoStop ) {
+                $this->_bail( $errorMessage );
             }
             return true;
         }

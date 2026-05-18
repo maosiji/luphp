@@ -44,7 +44,7 @@ class LUResult implements JsonSerializable
      * 成功时创建结果
      * @param mixed $data 业务数据（可为任意类型）
      * @param string $msg 成功描述（默认：'操作成功'）
-     * @return LUResult
+     * @return static 谁调用我，我就返回谁
      */
     public static function success( $data = null, string $msg = '操作成功' ): LUResult
     {
@@ -56,7 +56,7 @@ class LUResult implements JsonSerializable
      * @param int $code 错误码（建议用类常量）
      * @param string $msg 错误描述（必填）
      * @param mixed $data 错误详情（可选）
-     * @return LUResult
+     * @return static 谁调用我，我就返回谁
      */
     public static function error( int $code, string $msg, $data = null ): LUResult
     {
@@ -66,9 +66,9 @@ class LUResult implements JsonSerializable
     /**
      * 将异常转为统一错误结果
      * @param \Throwable $e
-     * @return LUResult
+     * @return static 谁调用我，我就返回谁
      */
-    public static function exception(\Throwable $e): LUResult {
+    public static function exception( \Throwable $e ): LUResult {
         return self::error($e->getCode() ?: self::CODE_ERROR, $e->getMessage());
     }
 
@@ -85,13 +85,13 @@ class LUResult implements JsonSerializable
     // ==================== 便捷判断与访问方法 ====================
 
     /** 是否为成功状态 */
-    public function isSuccess(): int
+    public function isSuccess(): bool
     {
         return $this->code === self::CODE_SUCCESS;
     }
 
     /** 是否为失败状态 */
-    public function isError(): int
+    public function isError(): bool
     {
         return !$this->isSuccess();
     }

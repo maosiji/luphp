@@ -19,18 +19,16 @@
  */
 
 namespace MAOSIJI\LU\WP\SQL;
-use MAOSIJI\LU\EXCEPTION\LUDatabaseException;
-use MAOSIJI\LU\LUArray;
+use MAOSIJI\LU\LUResult;
 
 if ( ! defined( 'ABSPATH' ) ) { die; }
 abstract class LUWPDBSQL
 {
-
     protected $tableNameNoPrefix;
     private static $instances = [];
     // 当前页面查询缓存，在一个页面里相同的查询条目只用查询一次即可，第2次直接返回缓存里的。
-    private static $query_cache = [];
-    private function __construct( string $tableNameNoPrefix )
+    private $query_cache = [];
+    protected function __construct( string $tableNameNoPrefix )
     {
         $this->tableNameNoPrefix = $tableNameNoPrefix;
     }
@@ -40,7 +38,7 @@ abstract class LUWPDBSQL
      * @param string $tableNameNoPrefix
      * @return mixed|static|null
      */
-    public static function getObj( string $tableNameNoPrefix )
+    protected static function getObj( string $tableNameNoPrefix )
     {
         // 使用 get_called_class() 确保每个子类都有自己的实例
         $calledClass = get_called_class();
@@ -57,56 +55,222 @@ abstract class LUWPDBSQL
     }
 
     /**************************************************
-     * 数据表操作
+     * 数据表操作 DDL
      **************************************************/
 
     /**
      * 创建数据表
      *
-     * @param string $columnsSql 列定义
-     * @return LUWPDDLResult
+     * @param string $colSQL 列定义
+     * @return LUResult
      */
-    protected function createTable( string $columnsSql ): LUWPDDLResult
+    protected function createTable( string $colSQL ): LUResult
     {
         $ddl = new LUWPDDL();
-        return $ddl->createTable($this->tableNameNoPrefix, $columnsSql);
+        return $ddl->createTable($this->tableNameNoPrefix, $colSQL);
     }
 
     /**
-     * 更新数据表结构
-     * @return array
-     */
-    private function updateTable()
+     * 修改表名
+     *
+     * @param string $newTableNameNoPrefix
+     * @return LUResult
+     * */
+    protected function renameTableName( string $newTableNameNoPrefix ): LUResult
     {
-
+        $ddl = new LUWPDDL();
+        return $ddl->renameTableName($this->tableNameNoPrefix, $newTableNameNoPrefix);
     }
 
     /**
-     * 删除数据表
-     * @return array
-     */
-    private function deleteTable()
+     * 清空表数据，保留结构
+     *
+     * @return LUResult
+     * */
+    protected function truncateTable(): LUResult
     {
+        $ddl = new LUWPDDL();
+        $result = $ddl->truncateTable($this->tableNameNoPrefix);
+        if ( $result->isSuccess() ) {
+            $this->clearTableCache();
+        }
 
+        return $result;
     }
+
+    /**
+     * 修改表注释
+     *
+     * @param string $comment
+     * @return LUResult
+     */
+    protected function commentTable( string $comment ): LUResult
+    {
+        $ddl = new LUWPDDL();
+        return $ddl->commentTable($this->tableNameNoPrefix, $comment);
+    }
+
+    /**
+     * 删除表
+     *
+     * @return LUResult
+     */
+    protected function deleteTable(): LUResult
+    {
+        $ddl = new LUWPDDL();
+        $result = $ddl->deleteTable($this->tableNameNoPrefix);
+        if ( $result->isSuccess() ) {
+            $this->clearTableCache();
+        }
+
+        return $result;
+    }
+
+    /**
+     * 修改表 添加列
+     *
+     * @param string $columnName 列名
+     * @param string $columnType 列类型
+     * @param string $columnFormat 占位符
+     * @param string|null $columnDefault 默认值
+     * @param string $columnComment 备注、说明
+     *
+     * @return LUResult
+     * */
+    protected function alterTableAddColumn( string $columnName, string $columnType='', string $columnFormat='%s', $columnDefault='', string $columnComment='' ): LUResult
+    {
+        $ddl = new LUWPDDL();
+        $result = $ddl->alterTableAddColumn($this->tableNameNoPrefix, $columnName, $columnType, $columnFormat, $columnDefault, $columnComment);
+        if ( $result->isSuccess() ) {
+            $this->clearTableCache();
+        }
+
+        return $result;
+    }
+
+    /**
+     * 修改表 修改列，不能修改列名【注意：更改之前已经存在的内容不会变】
+     *
+     * @param string $columnName 列名
+     * @param string $columnType 列类型
+     * @param string $columnFormat 占位符
+     * @param string|null $columnDefault 默认值
+     * @param string $columnComment 备注、说明
+     *
+     * @return LUResult
+     */
+    protected function alterTableModifyColumn( string $columnName, string $columnType, string $columnFormat='%s', $columnDefault='', string $columnComment='' ): LUResult
+    {
+        $ddl = new LUWPDDL();
+        $result = $ddl->alterTableModifyColumn($this->tableNameNoPrefix, $columnName, $columnType, $columnFormat, $columnDefault, $columnComment);
+        if ( $result->isSuccess() ) {
+            $this->clearTableCache();
+        }
+
+        return $result;
+    }
+
+    /**
+     * 修改表 修改列，可以修改列名【注意：更改之前已经存在的内容不会变】
+     *
+     * @param string $columnName 列名
+     * @param string $newColumnName 新列名
+     * @param string $columnType 列类型
+     * @param string $columnFormat 占位符
+     * @param string|null $columnDefault 默认值
+     * @param string $columnComment 备注、说明
+     *
+     * @return LUResult
+     */
+    protected function alterTableChangeColumn( string $columnName, string $newColumnName, string $columnType, string $columnFormat='%s', $columnDefault='', string $columnComment='' ): LUResult
+    {
+        $ddl = new LUWPDDL();
+        $result = $ddl->alterTableChangeColumn($this->tableNameNoPrefix, $columnName, $newColumnName, $columnType, $columnFormat, $columnDefault, $columnComment);
+        if ( $result->isSuccess() ) {
+            $this->clearTableCache();
+        }
+
+        return $result;
+    }
+
+    /**
+     * 修改表 删除列
+     *
+     * @param string $columnName:要删除的列名
+     * @return LUResult
+     */
+    protected function alterTableDeleteColumn( string $columnName ): LUResult
+    {
+        $ddl = new LUWPDDL();
+        $result = $ddl->alterTableDeleteColumn($this->tableNameNoPrefix, $columnName);
+        if ( $result->isSuccess() ) {
+            $this->clearTableCache();
+        }
+
+        return $result;
+    }
+
+    /**
+     * 修改表 添加索引
+     *
+     * @param string $indexName 索引名
+     * @param string $columnName 列名
+     * @return LUResult
+     */
+    protected function alterTableAddIndex( string $indexName, string $columnName ): LUResult
+    {
+        $ddl = new LUWPDDL();
+        return $ddl->alterTableAddIndex($this->tableNameNoPrefix, $indexName, $columnName);
+    }
+
+    /**
+     * 修改表 添加唯一约束（创建唯一索引）
+     *
+     * @param string $indexName 唯一索引名
+     * @param string $columnName 列名
+     * @return LUResult
+     */
+    protected function alterTableAddUnique( string $indexName, string $columnName ): LUResult
+    {
+        $ddl = new LUWPDDL();
+        return $ddl->alterTableAddUnique($this->tableNameNoPrefix, $indexName, $columnName);
+    }
+
+    /**
+     * 删除索引 或 唯一索引
+     *
+     * @param string $indexName
+     * @return LUResult
+     */
+    protected function alterTableDeleteIndex( string $indexName ): LUResult
+    {
+        $ddl = new LUWPDDL();
+        return $ddl->alterTableDeleteIndex($this->tableNameNoPrefix, $indexName);
+    }
+
 
     /**************************************************
-     * 数据插入
+     * 数据操作 DML
      **************************************************/
 
+
     /**
-     * 插入单行数据
+     * 插入一条数据
      *
      * @param array  $param             关联数组，键为字段名，值为要插入的数据
-     * @param array  $format            与 $data 对应的占位符数组，如 ['%s','%d']
+     * @param array  $format            与 $param 对应的占位符数组，如 ['%s','%d']
      *
-     * @return LUWPDMLResult
-     * @throws LUDatabaseException
+     * @return LUResult
      */
-    protected function insert( array $param, array $format ): LUWPDMLResult
+    protected function insert( array $param, array $format ): LUResult
     {
         $dml = new LUWPDML();
-        return $dml->insert( $this->tableNameNoPrefix, $param, $format );
+        $result = $dml->insert( $this->tableNameNoPrefix, $param, $format );
+        if ( $result->isSuccess() ) {
+            $this->clearTableCache();
+        }
+
+        return $result;
     }
 
     /**
@@ -116,88 +280,101 @@ abstract class LUWPDBSQL
      * @param array  $format            一维占位符数组，如 ['%s','%d','%f']，与每行的列顺序对应
      * @param bool   $useTransaction    是否启用事务（默认开启，保证原子性）
      *
-     * @return int 插入的总行数
-     * @throws LUDatabaseException
+     * @return LUResult 插入的总行数
      *
      * 调用示例
      *
      *          $dml = new LUWPDML();
      *          $rowParam = [
-     *                      ['name' => 'Alice', 'age' => 25],
-     *                      ['name' => 'Bob',   'age' => 30],
-     *                  ];
+     *                          ['name' => 'Alice', 'age' => 25],
+     *                          ['name' => 'Bob',   'age' => 30],
+     *                      ];
      *          $formats = ['%s', '%d'];
      *          $inserted = $dml->batchInsert('users', $rowParam, $format);
      */
-    protected function batchInsert( array $rowParam, array $format, bool $useTransaction=true ): int
+    protected function batchInsert( array $rowParam, array $format, bool $useTransaction=true ): LUResult
     {
         $dml = new LUWPDML();
-        return $dml->batchInsert( $this->tableNameNoPrefix, $rowParam, $format, $useTransaction );
+        $result = $dml->batchInsert( $this->tableNameNoPrefix, $rowParam, $format, $useTransaction );
+        if ( $result->isSuccess() ) {
+            $this->clearTableCache();
+        }
+
+        return $result;
     }
 
-    /**************************************************
-     * 数据表更新
-     **************************************************/
-
     /**
-     * 更新记录
+     * 更新一条数据
      *
      * @param array  $param             要更新的数据关联数组
-     * @param array  $paramFormat       数据对应的占位符
-     * @param array  $where             WHERE 条件关联数组
+     * @param array  $format            数据对应的占位符
+     * @param array  $whereParam        WHERE 条件关联数组
      * @param array  $whereFormat       WHERE 条件占位符
      *
-     * @return int 受影响行数（可能为 0）
-     * @throws LUDatabaseException
+     * @return LUResult 受影响行数（可能为 0）
      */
-    protected function update( array $param, array $paramFormat, array $where, array $whereFormat ): int
+    protected function update( array $param, array $format, array $whereParam, array $whereFormat ): LUResult
     {
         $dml = new LUWPDML();
-        return $dml->update( $this->tableNameNoPrefix, $param, $paramFormat, $where, $whereFormat );
+        $result = $dml->update( $this->tableNameNoPrefix, $param, $format, $whereParam, $whereFormat );
+        if ( $result->isSuccess() ) {
+            $this->clearTableCache();
+        }
+
+        return $result;
     }
 
-    /**************************************************
-     * 数据删除
-     **************************************************/
+    /**
+     * 批量更新多行（支持事务，逐行执行）
+     *
+     * @param array  $rowParam          二维数组，每个元素是要更新的数据关联数组（所有行结构必须相同）
+     * @param array  $format            一维占位符数组，与更新列的字段顺序对应，如 [‘%s’,‘%d’]
+     * @param array  $rowWhereParam     二维数组，每个元素是 WHERE 条件关联数组（与 dataRows 一一对应）
+     * @param array  $whereFormat       一维占位符数组，与条件列的字段顺序对应
+     * @param bool   $useTransaction    是否启用事务（默认开启，保证原子性）
+     *
+     * @return LUResult 总受影响的行数
+     *
+     * 调用示例：
+     *      $dml = new LUWPDML();
+     *      $data = [
+     *          ['name' => 'Alice', 'age' => 26],
+     *          ['name' => 'Bob',   'age' => 31],
+     *      ];
+     *      $conditions = [
+     *          ['id' => 1],
+     *          ['id' => 2],
+     *      ];
+     *      $result = $dml->batchUpdate('users', $data, ['%s','%d'], $conditions, ['%d']);
+     */
+    protected function batchUpdate( array $rowParam, array $format, array $rowWhereParam, array $whereFormat, bool $useTransaction = true ): LUResult
+    {
+        $dml = new LUWPDML();
+        $result = $dml->batchUpdate($this->tableNameNoPrefix, $rowParam, $format, $rowWhereParam, $whereFormat, $useTransaction);
+        if ( $result->isSuccess() ) {
+            $this->clearTableCache();
+        }
+
+        return $result;
+    }
 
     /**
-     * 删除记录
+     * 删除一条数据
      *
      * @param array  $whereParam         WHERE 条件关联数组
      * @param array  $whereFormat       条件占位符
      *
-     * @return int 受影响行数
-     * @throws LUDatabaseException
+     * @return LUResult 受影响行数
      */
-    protected function delete( array $whereParam, array $whereFormat ): int
+    protected function delete( array $whereParam, array $whereFormat ): LUResult
     {
         $dml = new LUWPDML();
-        return $dml->delete( $this->tableNameNoPrefix, $whereParam, $whereFormat );
-    }
+        $result = $dml->delete( $this->tableNameNoPrefix, $whereParam, $whereFormat );
+        if ( $result->isSuccess() ) {
+            $this->clearTableCache();
+        }
 
-    /**
-     * 【单条件】自定义删除查询（query、支持事务）
-     *
-     * 适用于没有共同 WHERE 条件但需批量删除的场景，如按 ID 列表删除。
-     *
-     * @param string $colName           :列名
-     * @param string $operator          :运算符 =, >, <, >=, <=, <>, !=, LIKE, BETWEEN, IN, NOT IN 等
-     * @param string|array $whereFormat              :字段值占位符
-     * @param mixed $whereValue               :筛选值数组
-     * @param bool $isTransaction       :是否启用事务
-     *
-     * @return int 删除行数
-     * @throws LUDatabaseException
-     */
-    protected function queryDeleteSingleCondition( string $colName, string $operator, $whereFormat, $whereValue, bool $isTransaction=false ): int
-    {
-        $whereCondition = (new LUWPSQLWhereCondition())->and( $colName, $operator, $whereValue, $whereFormat );
-        $result = $whereCondition->build();
-        $sql = $result['sql'];
-        $value = $result['value'];
-
-        $dml = new LUWPDML();
-        return $dml->queryDelete( $this->tableNameNoPrefix, $sql, $value, $isTransaction );
+        return $result;
     }
 
     /**
@@ -206,604 +383,206 @@ abstract class LUWPDBSQL
      * 适用于没有共同 WHERE 条件但需批量删除的场景，如按 ID 列表删除。
      *
      * @param string $whereSql          WHERE 子句，如 "WHERE id IN (%d,%d)"
-     * @param array  $whereValues       绑定值数组
-     * @param bool   $isTransaction     是否启用事务
+     * @param array  $whereValue        绑定值数组
+     * @param bool   $useTransaction    是否启用事务
      *
-     * @return int 删除行数
-     * @throws LUDatabaseException
+     * @return LUResult 删除行数
      */
-    protected function queryDelete(string $whereSql, array $whereValues, bool $isTransaction = false ): int
+    protected function queryDelete(string $whereSql, array $whereValue, bool $useTransaction=true ): LUResult
     {
         $dml = new LUWPDML();
-        return $dml->queryDelete( $this->tableNameNoPrefix, $whereSql, $whereValues, $isTransaction );
-    }
-
-    /**************************************************
-     * 数据查询
-     **************************************************/
-
-    /**
-     * 【单条件】查询一列数据
-     *
-     * @param string $colName :列名
-     * @param string $operator :运算符 =, >, <, >=, <=, <>, !=, LIKE, BETWEEN, IN, NOT IN 等
-     * @param string|array $whereFormat :字段值占位符
-     * @param mixed $whereValue :筛选值数组
-     * @param bool $isCache:是否缓存
-     *
-     * @return array
-     * @throws LUDatabaseException
-     * */
-    protected function getColSingleCondition( string $colName, string $operator, $whereFormat, $whereValue, bool $isCache=true ): array
-    {
-        // 如果有缓存，则先查看缓存里的
-        if ( $isCache ) {
-            $cache_key = $this->generate_cache_key( __FUNCTION__, func_get_args() );
-            if ( isset( self::$query_cache[ $cache_key ] ) ) {
-                return self::$query_cache[ $cache_key ];
-            }
-        }
-
-        $whereCondition = (new LUWPSQLWhereCondition())->and( $colName, $operator, $whereValue, $whereFormat );
-        $whereBuild = $whereCondition->build();
-        $sql = $whereBuild['sql'];
-        $value = $whereBuild['value'];
-
-        $dql = new LUWPDQL();
-        $result = $dql->getCol( $this->tableNameNoPrefix, $sql, $value );
-
-        if ( $isCache ) {
-            self::$query_cache[ $cache_key ] = $result;
+        $result = $dml->queryDelete( $this->tableNameNoPrefix, $whereSql, $whereValue, $useTransaction );
+        if ( $result->isSuccess() ) {
+            $this->clearTableCache();
         }
 
         return $result;
     }
+
+
+    /**************************************************
+     * 数据查询 DQL
+     **************************************************/
 
     /**
      * 查询单列数据
      *
-     * @param string $colName           要查询的列名
-     * @param string $whereSql          WHERE 子句（含占位符），如 " WHERE status = %s"
-     * @param array  $whereValues       绑定值数组
+     * @param string $columnName             要查询的列名
+     * @param string $whereSql               WHERE 子句（含占位符），如 " WHERE status = %s"
+     * @param array  $whereValue             绑定值数组
+     * @param bool $isDistinct               是否去重
+     * @param bool $isCache:                 是否缓存
      *
-     * @return array 列值数组，无结果时返回空数组
-     * @throws LUDatabaseException
+     * @return LUResult 列值数组，无结果时返回空数组
      */
-    protected function getCol( string $colName, string $whereSql = '', array $whereValues = [], bool $isCache=true ): array
+    protected function getCol( string $columnName, string $whereSql = '', array $whereValue = [], bool $isDistinct=false, bool $isCache=true ): LUResult
     {
         // 如果有缓存，则先查看缓存里的
         if ( $isCache ) {
             $cache_key = $this->generate_cache_key( __FUNCTION__, func_get_args() );
-            if ( isset( self::$query_cache[ $cache_key ] ) ) {
-                return self::$query_cache[ $cache_key ];
+            if ( isset( $this->query_cache[ $cache_key ] ) ) {
+                return $this->query_cache[ $cache_key ];
             }
         }
 
         $dql = new LUWPDQL();
-        $result = $dql->getCol( $this->tableNameNoPrefix, $colName, $whereSql, $whereValues );
+        $result = $dql->getCol( $this->tableNameNoPrefix, $columnName, $whereSql, $whereValue, $isDistinct );
 
         if ( $isCache ) {
-            self::$query_cache[ $cache_key ] = $result;
+            $this->query_cache[ $cache_key ] = $result;
         }
 
         return $result;
     }
 
-
     /**
-     * 查询单个聚合值（COUNT、SUM、AVG 等）
+     * 查询单个值
+     * 查询单行单列某个具体值 或 查询聚合值（COUNT、MAX、MIN、AVG、SUM）CONCAT（字符串拼接）
      *
-     * @param string $aggregateColName 聚合函数的列名，如 "COUNT(*)" 中的 *，或 "SUM(amount)"中的 amount
-     * @param string $aggregateFunctionName   聚合函数，如 "COUNT(*)" 中的 COUNT 或 "SUM(amount)"中的 SUM
-     * @param string $colName :列名
-     * @param string $operator :运算符 =, >, <, >=, <=, <>, !=, LIKE, BETWEEN, IN, NOT IN 等
-     * @param string|array $whereFormat :字段值占位符
-     * @param mixed $whereValue :筛选值数组
-     * @param bool $isCache :是否缓存
+     * @param string $columnName 列名  可以是单个列名；也可以是多个，即 'name, "-", age'
+     * @param string $aggregateFunctionName 聚合函数，如 "COUNT(*)" 中的 COUNT 或 "SUM(amount)"中的 SUM
+     * @param string $whereSql
+     * @param array  $whereValue
+     * @param bool $isCache:                 是否缓存
      *
-     * @return string|null 查询结果（可能为 null）
-     * @throws LUDatabaseException
+     * @return LUResult 查询结果（可能为 null）
      */
-    protected function getVar( string $aggregateColName, string $aggregateFunctionName, string $colName, string $operator, $whereFormat, $whereValue, bool $isCache=true )
+    protected function getVar( string $columnName, string $aggregateFunctionName, string $whereSql='', array $whereValue=[], bool $isCache=true ): LUResult
     {
-        $aggregateFunction = $aggregateFunctionName.'('.$aggregateColName.')';
-    }
-
-    /**
-     * 查询1列的值并进行聚合运算
-     * @param $where                : (array) where的数组，必须包含元素 array('meta'=>array(),'compare=>array(),'format'=>array())
-     *                                          meta : array(字段名称=>字段值)
-     *                                          compare : array('=') 运算符数组（=、<、LIKE等）
-     *                                          format : array('%d') 格式数组
-     * @param $col                 : (string) 选择特定列或所有列， *，全部显示。只能写一个。
-     * @param $juhe                : 默认 COUNT，可选
-     *                                  COUNT（总行数）、
-     *                                  SUM（该列字段值的总和）、
-     *                                  AVG（该列字段值的平均值）、
-     *                                  MIN（该列字段值的最小值）、
-     *                                  MAX（该列字段值的最大值）
-     * @param array $whereParam
-     * @param array $whereFormat
-     * @param array $whereCompare
-     * @return array
-     */
-    protected function get_var( string $col='id', string $juhe='COUNT', array $whereParam=[], array $whereCompare=[], array $whereFormat=[], bool $isCache=false ): array
-    {
-        // 如果用缓存，则先查看缓存里的
+        // 如果有缓存，则先查看缓存里的
         if ( $isCache ) {
             $cache_key = $this->generate_cache_key( __FUNCTION__, func_get_args() );
-            if ( isset( self::$query_cache[ $cache_key ] ) ) {
-                return self::$query_cache[ $cache_key ];
+            if ( isset( $this->query_cache[ $cache_key ] ) ) {
+                return $this->query_cache[ $cache_key ];
             }
         }
 
-        // 检测 col 输入是否正确
-        $colVerify = $this->verify('cols', $col);
-        if ( $colVerify['code'] == 0 ) { return $colVerify; }
-        // 检测 juhe 输入是否正确
-        $juheVerify = $this->verify('juhe', $juhe);
-        if ( $juheVerify['code'] == 0 ) { return $juheVerify; }
-
-        $whereSQL = '';
-        $whereValue = '';
-        if ( !empty($whereParam) || !empty($whereFormat) || !empty($whereCompare) ) {
-            // 检测 where 输入是否正确
-            $whereVerify = $this->verify('where', array(
-                'meta' => $whereParam,
-                'format' => $whereFormat,
-                'compare' => $whereCompare,
-            ));
-            if ($whereVerify['code'] == 0) {
-                return $whereVerify;
-            }
-
-            $where = $this->generate_where_sql( $whereParam, $whereCompare, $whereFormat );
-            $whereSQL = $where['sql'];
-            $whereValue = $where['value'];
+        $columnExpression = $columnName;
+        if ( $aggregateFunctionName!=='' ) {
+            // 聚合表达式，如 "COUNT(*)" 或 "SUM(amount)"
+            $columnExpression = $aggregateFunctionName.'('.$columnName.')';
         }
-
-        // 合并语句
-        $jhCol = ' '.$juhe.'('.$col.') ';
 
         $dql = new LUWPDQL();
-        $result = $dql->get_var( $this->tableName, $jhCol, $whereSQL, $whereValue );
+        $result = $dql->getVar( $this->tableNameNoPrefix, $columnExpression, $whereSql, $whereValue );
 
         if ( $isCache ) {
-            self::$query_cache[ $cache_key ] = $result;
+            $this->query_cache[ $cache_key ] = $result;
         }
 
         return $result;
     }
 
     /**
-     * 查询1行
-     * @param $where                : (array) where的数组，必须包含元素 array('meta'=>array(),'compare=>array(),'format'=>array())
-     *                                          meta : array(字段名称=>字段值)
-     *                                          compare : array('=') 运算符数组（=、<、LIKE等）
-     *                                          format : array('%d') 格式数组
-     * @param $orderSort            : (string) 排序（如 ORDER BY id DESC ），必须包含元素 array('orderby'=>'id', 'sort'=>'DESC')
-     *                                          orderby : string 字段名
-     *                                          sort : 排序方式 ASC 正序 DESC 倒序
-     * @param $cols                 : (string) 选择特定列或所有列，默认 *，全部显示。若写多个，如：id,name,age
-     * @param array $whereFormat
-     * @param array $whereCompare
-     * @param array $whereParam
-     * @param $output               : (string) OBJECT（对象）、ARRAY_A（关联数组）、ARRAY_N（数值数组）。默认 ARRAY_A。
-     * @return array
+     * 查询单行数据
      *
-     * 查询 sex是女，age大于20 的行
-     * array(
-     *      'meta'=>array(
-     *          'sex' => '女',
-     *          'age'  => 20,
-     *      ),
-     *      'compare=>array(
-     *          '=',
-     *          '>',
-     *      ),
-     *      'format'=>array(
-     *          ‘%s’,
-     *          '%d',
-     *      )
-     * )
+     * @param string $columnsName           列名，'*' 或逗号分隔
+     * @param string $whereSql              WHERE 子句（含占位符）
+     * @param array  $whereValue
+     * @param string $output                返回格式：OBJECT|ARRAY_A|ARRAY_N，默认 ARRAY_A
+     * @param  int $piece                    提取查询结果中的第几条数据，从 0 开始计数，默认 0
+     * @param bool $isCache:                 是否缓存
+     *
+     * @return LUResult 无记录时返回 null
      */
-    protected function get_row( string $cols='*', array $whereParam=[], array $whereCompare=[], array $whereFormat=[], bool $isCache=false, string $output='ARRAY_A', array $orderSort=array('orderby'=>'id', 'sort'=>'DESC') ): array
+    protected function getRow( string $columnsName='', string $whereSql = '', array $whereValue = [], int $piece=0, string $output = 'ARRAY_A', bool $isCache=true ): LUResult
     {
-        // 如果用缓存，则先查看缓存里的
+        // 如果有缓存，则先查看缓存里的
         if ( $isCache ) {
             $cache_key = $this->generate_cache_key( __FUNCTION__, func_get_args() );
-            if ( isset( self::$query_cache[ $cache_key ] ) ) {
-                return self::$query_cache[ $cache_key ];
+            if ( isset( $this->query_cache[ $cache_key ] ) ) {
+                return $this->query_cache[ $cache_key ];
             }
         }
 
-        // 检测 ordersort 输入是否正确
-        $orderSortVerify = $this->verify('ordersort', $orderSort);
-        if ( $orderSortVerify['code'] == 0 ) { return $orderSortVerify; }
-        $orderSort = $orderSortVerify['data'];
-        // 检测 cols 输入是否正确
-        $colsVerify = $this->verify('cols', $cols);
-        if ( $colsVerify['code'] == 0 ) { return $colsVerify; }
-        // 检测 cols 输入是否正确
-        $outputVerify = $this->verify('output', $output);
-        if ( $outputVerify['code'] == 0 ) { return $outputVerify; }
-
-        $whereSQL = '';
-        $whereValue = '';
-        if ( !empty($whereParam) || !empty($whereFormat) || !empty($whereCompare) ) {
-            // 检测 where 输入是否正确
-            $whereVerify = $this->verify('where', array(
-                'meta' => $whereParam,
-                'format' => $whereFormat,
-                'compare' => $whereCompare,
-            ));
-            if ($whereVerify['code'] == 0) {
-                return $whereVerify;
-            }
-
-            $where = $this->generate_where_sql( $whereParam, $whereCompare, $whereFormat );
-            $whereSQL = $where['sql'];
-            $whereValue = $where['value'];
-        }
-
-        // 编写 orderby 语句
-        $orderSortSQL = ' ORDER BY '.$orderSort['orderby'].' '.$orderSort['sort'].' ';
-        // 合并语句
-        $sql = $whereSQL.$orderSortSQL;
+        if (trim($columnsName)==='') { $columnsName='*'; }
 
         $dql = new LUWPDQL();
-        $result = $dql->get_row( $this->tableName, $cols, $sql, $whereValue, $output );
+        $result = $dql->getRow($this->tableNameNoPrefix, $columnsName, $whereSql, $whereValue, $output, $piece);
 
         if ( $isCache ) {
-            self::$query_cache[ $cache_key ] = $result;
+            $this->query_cache[ $cache_key ] = $result;
         }
 
         return $result;
     }
 
     /**
-     * 查询多行
-     * @param string $cols          : 选择特定列或所有列，默认 *，全部显示。若写多个，如：id,name,age
-     * @param array $whereParam     : where数组，如 array(字段名称=>字段值)
-     * @param array $whereCompare   : where符号数组，如 array('=') 运算符数组（=、<、LIKE等）
-     * @param array $whereFormat    : where格式数组，如 array('%d')
-     * @param bool $isCache         : 是否缓存，只在当前页面缓存，默认 false。
-     * @param $limit                : (int) 查询数量，不可使用 OFFSET 属性，如要分页可根据上一次查询的id来操作。默认 0，即无限制
-     * @param $output               : (string) OBJECT（对象）、ARRAY_A（关联数组）、ARRAY_N（数值数组）。默认 ARRAY_A。
-     * @param $orderSort            : (array) 排序（如 ORDER BY id DESC ），必须包含元素 array('orderby'=>'id', 'sort'=>'DESC')
-     *                                          orderby : string 字段名
-     *                                          sort : 排序方式 ASC 正序 DESC 倒序
-     * @return array
+     * 查询多行数据
+     *
+     * @param string $columnsName
+     * @param string $whereSql
+     * @param array  $whereValue
+     * @param string $output        返回格式：OBJECT（对象）/ARRAY_A（默认，关联数组）/ARRAY_N（索引数组）
+     * @param bool $isDistinct         是否去重
+     * @param bool $isCache:                 是否缓存
+     *
+     * @return LUResult  结果集数组，无记录时返回空数组
      */
-    protected function get_results( string $cols='*', array $whereParam=[], array $whereCompare=[], array $whereFormat=[], bool $isCache=false, int $limit=0, string $output='ARRAY_A', array $orderSort=array('orderby'=>'id', 'sort'=>'DESC') ): array
+    protected function getResults( string $columnsName='', string $whereSql='', array $whereValue=[], bool $isDistinct=false, string $output = 'ARRAY_A', bool $isCache=true ): LUResult
     {
-        // 如果用缓存，则先查看缓存里的
+        // 如果有缓存，则先查看缓存里的
         if ( $isCache ) {
             $cache_key = $this->generate_cache_key( __FUNCTION__, func_get_args() );
-            if ( isset( self::$query_cache[ $cache_key ] ) ) {
-                return self::$query_cache[ $cache_key ];
+            if ( isset( $this->query_cache[ $cache_key ] ) ) {
+                return $this->query_cache[ $cache_key ];
             }
         }
 
-        // 检测 ordersort 输入是否正确
-        $orderSortVerify = $this->verify('ordersort', $orderSort);
-        if ( $orderSortVerify['code'] == 0 ) { return $orderSortVerify; }
-        // 检测 limit 输入是否正确
-        $limitVerify = $this->verify('limit', $limit);
-        if ( $limitVerify['code'] == 0 ) { return $limitVerify; }
-        // 检测 cols 输入是否正确
-        $colsVerify = $this->verify('cols', $cols);
-        if ( $colsVerify['code'] == 0 ) { return $colsVerify; }
-        // 检测 cols 输入是否正确
-        $outputVerify = $this->verify('output', $output);
-        if ( $outputVerify['code'] == 0 ) { return $outputVerify; }
-
-        $orderSort = $orderSortVerify['data'];
-
-        $whereSQL = '';
-        $whereValue = [];
-        if ( !empty($whereParam) || !empty($whereFormat) || !empty($whereCompare) ) {
-            // 检测 where 输入是否正确
-            $whereVerify = $this->verify('where', array(
-                'meta' => $whereParam,
-                'format' => $whereFormat,
-                'compare' => $whereCompare,
-            ));
-            if ($whereVerify['code'] == 0) {
-                return $whereVerify;
-            }
-
-            $where = $this->generate_where_sql( $whereParam, $whereCompare, $whereFormat );
-            $whereSQL = $where['sql'];
-            $whereValue[] = $where['value'];
-        }
-
-        // 编写 orderby 语句
-        $orderSortSQL = ' ORDER BY '.$orderSort['orderby'].' '.$orderSort['sort'].' ';
-
-        // 编写 limit 语句
-        $limitSQL = '';
-        $limitValue = [];
-        if ( $limit>0 ) {
-            $limitSQL = ' LIMIT %d ';
-            $limitValue[] = $limit;
-        }
-
-        // 合并语句
-        $sql = $whereSQL.$orderSortSQL.$limitSQL;
-        $value = array_merge( $whereValue, $limitValue );
-
-//            return array('code'=>0, 'msg'=>'测试', 'data2'=>$sql, 'data3'=>$orderSort);
+        if (trim($columnsName)==='') { $columnsName='*'; }
 
         $dql = new LUWPDQL();
-        $result = $dql->get_results( $this->tableName, $cols, $sql, $value, $output );
+        $result = $dql->getResults($this->tableNameNoPrefix, $columnsName, $whereSql, $whereValue, $output, $isDistinct);
 
         if ( $isCache ) {
-            self::$query_cache[ $cache_key ] = $result;
+            $this->query_cache[ $cache_key ] = $result;
         }
 
         return $result;
     }
-
-    /**
-     * 组装 where 语句
-     * @param array $whereParam : where数组，如 array(字段名称=>字段值)
-     * @param array $whereCompare : where符号数组，如 array('=') 运算符数组（=、<、LIKE等）
-     * @param array $whereFormat : where格式数组，如 array('%d')
-     * @return array
-     */
-    private function generate_where_sql( array $whereParam=[], array $whereCompare=[], array $whereFormat=[] ): array
-    {
-        /*
-        array(
-            // AND
-            'post_status'   => 'publish',
-            // OR
-            'or'            => array(
-                'post_title'    => '标题',
-                'post_contnet'  => '内容',
-                'post_id'       => array(
-                    1,2,3,4,5,6
-                ),
-            ),
-            // AND
-            'post_parent'   => 1,
-            // AND
-            'create_time'   => array(
-                2025-01-01 00:00:00,
-                2025-01-01 23:59:59
-            )
-        );
-
-        array(
-            '=',
-            array( 'LIKE', 'LIKE', array( '=','=','=','=','=','=' ) ),
-            array( '=' ),
-            array( '>=', '<=' )
-        )
-
-        array(
-            '%s',
-            array( '%s','%s', array( '%d','%d','%d','%d','%d','%d' ) ),
-            '%d',
-            array( '%s', '%s' )
-        )
-         * */
-        $whereValue = array();
-        $whereSQL   = '';
-
-        $whereSQL .= ' WHERE ';
-        $o = 0;
-        foreach ( $whereParam as $key => $value ) {
-
-            // key为or时，才组装成or语句
-            if ( strtolower($key)==='or' && is_array($value) ) {
-                $p = 0;
-                foreach ( $value as $pk=>$pv ) {
-                    if ( $p===0 ) {
-                        $whereSQL .= ($o!==0?' AND ':'').' ( ';
-                    }
-
-                    // 如果不是数组
-                    if ( !is_array($pv) ) {
-                        $whereSQL .= ($p!==0 ? ' OR ':' ').$pk.$whereCompare[$o][$p].$whereFormat[$o][$p];
-                        $whereValue[] = strtolower($whereCompare[$o][$p])==='like' ? $this->_like_sql($pv) : $pv;
-                    }
-
-                    // 如果是三级数组
-                    if ( is_array($pv) ) {
-                        $q = 0;
-                        foreach ( $pv as $qk=>$qv ) {
-                            $whereSQL .= ($p!==0 ? ' OR ':' ').$pk.$whereCompare[$o][$p][$q].$whereFormat[$o][$p][$q];
-                            $whereValue[] = strtolower($whereCompare[$o][$p][$q])==='like' ? $this->_like_sql($qv) : $qv;
-
-                            $q++;
-                        }
-                    }
-
-                    if ( $p===count($value)-1 ) {
-                        $whereSQL .= ' )  ';
-                    }
-
-                    $p++;
-                }
-            }
-            // 都按 and 语句
-            else {
-
-                // 如果不是数组
-                if ( !is_array($value) ) {
-                    $whereSQL .= ($o!==0?' AND ':'') . ' '.$key.$whereCompare[$o].$whereFormat[$o].' ';
-                    $whereValue[] = strtolower($whereCompare[$o])==='like' ? $this->_like_sql($value) : $value;
-                }
-
-                // 如果是数组
-                if ( is_array($value) ) {
-                    $p = 0;
-                    foreach ( $value as $pv ) {
-                        $whereSQL .= ( $o!==0||$p!==0 ? ' AND ':'' ).$key.$whereCompare[$o][$p].$whereFormat[$o][$p].' ';
-                        $whereValue[] = strtolower($whereCompare[$o][$p])==='like' ? $this->_like_sql($pv) : $pv;
-
-                        $p++;
-                    }
-                }
-
-            }
-
-            $o++;
-        }
-
-        return array('sql'=>$whereSQL, 'value'=>$whereValue);
-    }
-    private function _like_sql( $value )
-    {
-        global $wpdb;
-        return '%'.$wpdb->esc_like($value).'%';
-    }
-
 
 
     /**************************************************
-     * 自定义
+     * 万能方法
      **************************************************/
 
+
     /**
-     * 根据编号查询是否有记录，在主表中为每条的编号，在meta表中为主表的编号
-     * @param $no : 编号
-     * @return array
+     * 自写SQL语句，操作前、操作后的验证也需要自行写
+     *
+     * @param string $sql
+     * @param array $value
+     * @param bool $isClearTableCache 是否清空缓存
+     * @param bool $isCache:                 是否启用缓存
+     * @return LUResult
      */
-    protected function get_no( string $no ): array
+    protected function query( string $sql, array $value, bool $isClearTableCache=true, bool $isCache=false ): LUResult
     {
-        if ( empty($no) ) {
-            return array('code'=>0, 'msg'=>'$no 为空', 'data'=>$no);
+        // 如果有缓存，则先查看缓存里的
+        if ( $isCache ) {
+            $cache_key = $this->generate_cache_key( __FUNCTION__, func_get_args() );
+            if ( isset( $this->query_cache[ $cache_key ] ) ) {
+                return $this->query_cache[ $cache_key ];
+            }
         }
 
-        $where = array(
-            'meta'  => array(
-                'no'    => $no,
-            ),
-            'compare'   => array(
-                '='
-            ),
-            'format'    => array(
-                '%s'
-            )
-        );
+        $ddl = new LUWPDDL();
+        $result =  $ddl->query($sql, $value);
+        if ( $result->isSuccess() && $isClearTableCache ) {
+            $this->clearTableCache();
+        }
 
-        return $this->get_row( 'no', $where );
+        if ( $isCache ) {
+            $this->query_cache[ $cache_key ] = $result;
+        }
+
+        return $result;
     }
-
-    /**
-     * 获取总条目数
-     * @return array
-     */
-    protected function get_total_num()
-    {
-        return $this->get_var();
-    }
-
-
 
 
     /**************************************************
-     * 公共方法
+     * 私有方法
      **************************************************/
-
-    /**
-     * 数据验证
-     * @param $args_name    : 验证的名称
-     * @param $args         : 验证的数组
-     * @return array
-     */
-    private function verify( string $args_name, $args )
-    {
-//            if ( !is_array($args) ) { return array('code'=>0, 'msg'=>'参数 '.$args_name.' 必须是数组', 'data'=>$args); }
-
-        switch( $args_name ) {
-
-            case 'where':
-
-                if ( !(new LUArray())->arrays_shape_match( $args['meta'], $args['compare'], $args['format'] ) ) {
-                    return (new LUSend())->send_array( 0, 'whereParam / whereCompar / whereFormat 三个参数的结构不一致', $args );
-                }
-
-                break;
-
-            case 'ordersort':
-
-                if ( !isset($args['orderby']) || empty($args['orderby']) ) { $args['orderby'] = 'id'; }
-                if ( !isset($args['sort']) || empty($args['sort']) || !in_array($args['sort'], array('ASC', 'DESC', 'asc', 'desc')) ) { $args['sort'] = 'DESC'; }
-
-                break;
-
-            case 'param':
-
-                if ( !isset($args['param']) || !isset($args['format']) ) {
-                    return (new LUSend())->send_array( 0, '参数 '.$args_name.' 数组缺少元素', $args );
-                }
-
-                if ( !is_array($args['param']) || !is_array($args['format']) ) {
-                    return (new LUSend())->send_array( 0, '参数 '.$args_name.' 数组元素不是数组', $args );
-                }
-
-                if ( empty($args['param']) || empty($args['format']) ) {
-                    return (new LUSend())->send_array( 0, '参数 '.$args_name.' 数组元素不可为空', $args );
-                }
-
-                if ( count($args['param']) !== count($args['format']) ) {
-                    return (new LUSend())->send_array( 0, '参数 '.$args_name.' 数组元素的长度不一致', $args );
-                }
-
-                break;
-
-            case 'limit':
-
-                if ( !is_int($args) ) {
-                    return (new LUSend())->send_array( 0, '参数 '.$args_name.' 不是正整数', $args );
-                }
-
-                break;
-
-            case 'cols':
-
-                if ( !is_string($args) ) {
-                    return (new LUSend())->send_array( 0, '参数 '.$args_name.' 不是字符串', $args );
-                }
-
-                break;
-
-            case 'col':
-
-                if ( !is_string($args) ) {
-                    return (new LUSend())->send_array( 0, '参数 '.$args_name.' 不是字符串', $args );
-                }
-
-                if ( strpos($args, ' ') !== false ) {
-                    return (new LUSend())->send_array( 0, '参数 '.$args_name.' 含有空格，应该传入一列的名称，不能传入多列名称', $args );
-                }
-
-                break;
-
-            case 'output':
-
-                if ( !in_array($args, array('ARRAY_A', 'ARRAY_N', 'OBJECT')) ) {
-                    return (new LUSend())->send_array( 0, '参数 '.$args_name.' 只能是 ARRAY_A、ARRAY_N、OBJECT', $args );
-                }
-
-                break;
-
-            case 'juhe':
-
-                if ( !in_array($args, array('COUNT', 'SUM', 'AVG', 'MIN', 'MAX', 'count', 'sum', 'avg', 'min', 'max')) ) {
-                    return (new LUSend())->send_array( 0, '参数 '.$args_name.' 只能是 COUNT、SUM、AVG、MIN、MAX', $args );
-                }
-
-                break;
-
-        }
-
-        return array('code'=>1, 'msg'=>'检测通过', 'data'=>$args);
-    }
 
     /**
      * 生成缓存 key
@@ -822,6 +601,10 @@ abstract class LUWPDBSQL
         );
     }
 
+    private function clearTableCache( )
+    {
+        $this->query_cache = [];
+    }
 
 
 

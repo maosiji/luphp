@@ -11,28 +11,29 @@
 
 namespace MAOSIJI\LU\WP\SQL;
 
-use MAOSIJI\LU\EXCEPTION\LUDatabaseException;
+use MAOSIJI\LU\LUResult;
 
 trait LUWPSQLPublic
 {
     /**
-     * 确保表存在，否则抛出异常
+     * 确保表存在
      *
      * @param string $tableName 完整表名（含前缀）
-     * @throws LUDatabaseException
+     * @return LUResult
      */
-    private function checkTableExists( string $tableName )
+    public function checkTableExist( string $tableName ): LUResult
     {
-        LUWPSQLParamValidator::tableName($tableName);
-
         global $wpdb;
         $exists = $wpdb->get_var("SHOW TABLES LIKE '$tableName'") === $tableName;
         if (!$exists) {
-            throw new LUDatabaseException(
-                "表 $tableName 不存在",
-                LUDatabaseException::CODE_TABLE_NOT_FOUND
-            );
+            return LUResult::error( 800800, "表 $tableName 不存在", [
+                'table_name'    => $tableName
+            ]);
         }
+
+        return LUResult::success([
+            'table_name'    => $tableName
+        ], "表 $tableName 存在");
     }
 
 
